@@ -21,8 +21,8 @@
         }
     </style>
 
-    <!-- 카카오 지도 SDK (autoload=false 제거하여 즉시 실행되도록 변경) -->
-    <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&libraries=services"></script>
+    <!-- defer 속성을 추가하여 스크립트 다운로드 완료까지 안전하게 대기합니다 -->
+    <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&autoload=false&libraries=services"></script>
 </head>
 <body>
 
@@ -34,71 +34,80 @@
 <div id="map"></div>
 
 <script>
-    // 1. 지도 초기화 (HTML이 다 로드된 시점에 실행)
-    const mapContainer = document.getElementById('map');
-    const mapOptions = {
-        center: new kakao.maps.LatLng(37.5759, 126.9768), // 기본 중심점: 광화문 광장
-        level: 3
-    };
-    
-    // kakao.maps.load 과정 없이 직접 지도 생성
-    const map = new kakao.maps.Map(mapContainer, mapOptions);
+    let map;
 
-    // 2. 화장실 정보 데이터 목록
-    const policeToilets = [
-        {
-            title: "미국대사관 건너편 빌딩 화장실",
-            lat: 37.5752,
-            lng: 126.9775,
-            note: "개방 협조 완료 / 24시간 가능",
-            isPoliceOnly: true
-        },
-        {
-            title: "일본대사관 개방 화장실",
-            lat: 37.5765,
-            lng: 126.9801,
-            note: "1층 로비 이용 가능",
-            isPoliceOnly: false
-        },
-        {
-            title: "경복궁역 경찰 전용 거점",
-            lat: 37.5768,
-            lng: 126.9725,
-            note: "경찰 신분증 제시 후 사용",
-            isPoliceOnly: true
+    // 페이지 및 외부 스크립트가 완벽하게 로드된 후 지도를 실행합니다
+    window.onload = function() {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+            kakao.maps.load(function() {
+                const mapContainer = document.getElementById('map');
+                const mapOptions = {
+                    center: new kakao.maps.LatLng(37.5759, 126.9768), // 기본 중심점: 광화문 광장
+                    level: 3
+                };
+                
+                map = new kakao.maps.Map(mapContainer, mapOptions);
+
+                // 화장실 정보 데이터 목록
+                const policeToilets = [
+                    {
+                        title: "미국대사관 건너편 빌딩 화장실",
+                        lat: 37.5752,
+                        lng: 126.9775,
+                        note: "개방 협조 완료 / 24시간 가능",
+                        isPoliceOnly: true
+                    },
+                    {
+                        title: "일본대사관 개방 화장실",
+                        lat: 37.5765,
+                        lng: 126.9801,
+                        note: "1층 로비 이용 가능",
+                        isPoliceOnly: false
+                    },
+                    {
+                        title: "경복궁역 경찰 전용 거점",
+                        lat: 37.5768,
+                        lng: 126.9725,
+                        note: "경찰 신분증 제시 후 사용",
+                        isPoliceOnly: true
+                    }
+                ];
+
+                // 마커 및 설명창 생성
+                policeToilets.forEach(toilet => {
+                    const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+                    const marker = new kakao.maps.Marker({
+                        position: markerPosition,
+                        map: map
+                    });
+
+                    const content = `
+                        <div style="padding:10px; font-size:12px; width:200px;">
+                            <strong style="color:${toilet.isPoliceOnly ? '#d9534f' : '#004085'};">
+                                ${toilet.isPoliceOnly ? '[경찰 우대/전용] ' : ''}${toilet.title}
+                            </strong>
+                            <p style="margin-top:6px; color:#555; line-height:1.3;">${toilet.note}</p>
+                        </div>
+                    `;
+
+                    const infowindow = new kakao.maps.InfoWindow({
+                        content: content,
+                        removable: true
+                    });
+
+                    kakao.maps.event.addListener(marker, 'click', function() {
+                        infowindow.open(map, marker);
+                    });
+                });
+            });
+        } else {
+            alert("카카오 지도 SDK를 불러오지 못했습니다. 카카오 개발자 센터의 '사이트 도메인' 설정을 다시 확인해주세요.");
         }
-    ];
+    };
 
-    // 3. 마커 및 설명창 생성
-    policeToilets.forEach(toilet => {
-        const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
-        const marker = new kakao.maps.Marker({
-            position: markerPosition,
-            map: map
-        });
-
-        const content = `
-            <div style="padding:10px; font-size:12px; width:200px;">
-                <strong style="color:${toilet.isPoliceOnly ? '#d9534f' : '#004085'};">
-                    ${toilet.isPoliceOnly ? '[경찰 우대/전용] ' : ''}${toilet.title}
-                </strong>
-                <p style="margin-top:6px; color:#555; line-height:1.3;">${toilet.note}</p>
-            </div>
-        `;
-
-        const infowindow = new kakao.maps.InfoWindow({
-            content: content,
-            removable: true
-        });
-
-        kakao.maps.event.addListener(marker, 'click', function() {
-            infowindow.open(map, marker);
-        });
-    });
-
-    // 4. 내 위치 찾기 기능
+    // 내 위치 찾기 기능
     function moveToCurrentLocation() {
-        if (navigator.geolocation) {
+        if (navigator.geolocation && map) {
             navigator.geolocation.getCurrentPosition(position => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
