@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기동대 전용 화장실 지도</title>
+    <!-- 카카오 지도 API 불러오기 (자신의 Javascript 키 입력 필요) -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&libraries=services"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; font-family: -apple-system, sans-serif; }
+        #map { width: 100%; height: 100vh; }
+        
+        /* 상단 타이틀 및 현위치 버튼 */
+        .header-bar {
+            position: absolute; top: 10px; left: 10px; right: 10px; z-index: 10;
+            background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; justify-content: space-between; align-items: center;
+        }
+        .header-bar h1 { font-size: 16px; color: #1a2a3a; font-weight: bold; }
+        .btn-location {
+            background: #004085; color: white; border: none; padding: 8px 12px;
+            border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;
+        }
+        
+        /* 커스텀 오버레이 스타일 */
+        .info-box {
+            background: white; padding: 10px 14px; border-radius: 8px; border: 2px solid #004085;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2); font-size: 13px; font-weight: bold; text-align: center;
+        }
+        .info-box.police { border-color: #d9534f; color: #d9534f; } /* 경찰 전용 표시 */
+    </style>
+</head>
+<body>
+
+<div class="header-bar">
+    <h1>🚔 기동대 화장실 지원 지도</h1>
+    <button class="btn-location" onclick="moveToCurrentLocation()">내 위치로 이동</button>
+</div>
+
+<div id="map"></div>
+
+<script>
+    // 1. 지도 초기화 (기본 위치: 광화문 광장/주요 대사관 밀집 지역)
+    const mapContainer = document.getElementById('map');
+    const mapOptions = {
+        center: new kakao.maps.LatLng(37.5759, 126.9768), // 광화문 세종대로
+        level: 3
+    };
+    const map = new kakao.maps.Map(mapContainer, mapOptions);
+
+    // 2. [주요 기능] 경찰관 직접 지정 커스텀 화장실 목록 (대사관 거점 & 집회구역)
+    const policeToilets = [
+        {
+            title: "미국대사관 건너편 빌딩 화장실",
+            lat: 37.5752,
+            lng: 126.9775,
+            note: "개방 협조 완료 / 24시간 가능",
+            isPoliceOnly: true
+        },
+        {
+            title: "일본대사관 개방 화장실",
+            lat: 37.5765,
+            lng: 126.9801,
+            note: "1층 로비 이용 가능",
+            isPoliceOnly: false
+        },
+        {
+            title: "경복궁역 경찰 전용 거점",
+            lat: 37.5768,
+            lng: 126.9725,
+            note: "경찰 신분증 제시 후 사용",
+            isPoliceOnly: true
+        }
+    ];
+
+    // 3. 커스텀 마커 및 설명창 렌더링
+    policeToilets.forEach(toilet => {
+        const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+        
+        // 지도 마커 생성
+        const marker = new kakao.maps.Marker({
+            position: markerPosition,
+            map: map
+        });
+
+        // 마커 위에 표시할 인포윈도우 (클릭 시 세부 내용)
+        const content = `
+            <div style="padding:10px; font-size:12px; width:200px;">
+                <strong style="color:${toilet.isPoliceOnly ? '#d9534f' : '#004085'};">
+                    ${toilet.isPoliceOnly ? '[경찰 우대/전용] ' : ''}${toilet.title}
+                </strong>
+                <p style="margin-top:4px; color:#555;">${toilet.note}</p>
+            </div>
+        `;
+
+        const infowindow = new kakao.maps.InfoWindow({
+            content: content,
+            removable: true
+        });
+
+        kakao.maps.event.addListener(marker, 'click', function() {
+            infowindow.open(map, marker);
+        });
+    });
+
+    // 4. GPS 기반 내 위치 이동 기능
+    function moveToCurrentLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const locPosition = new kakao.maps.LatLng(lat, lng);
+
+                map.panTo(locPosition);
+            }, () => {
+                alert('현재 위치를 불러올 수 없습니다. 위치 권한을 확인해주세요.');
+            });
+        }
+    }
+</script>
+</body>
+</html>
