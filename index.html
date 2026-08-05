@@ -2,121 +2,240 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>기동대 전용 화장실 지도</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>기동대 전용 화장실 지원 지도</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; font-family: -apple-system, sans-serif; }
+        body, html { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
-        
-        .header-bar {
-            position: absolute; top: 10px; left: 10px; right: 10px; z-index: 10;
-            background: rgba(255, 255, 255, 0.95); padding: 12px 16px; border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; justify-content: space-between; align-items: center;
+
+        /* 상단 UI 패널 */
+        .top-panel {
+            position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .header-bar h1 { font-size: 16px; color: #1a2a3a; font-weight: bold; }
-        .btn-location {
-            background: #004085; color: white; border: none; padding: 8px 12px;
-            border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: bold;
+        .search-box {
+            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px;
+        }
+        .search-box input {
+            width: 100%; border: none; outline: none; font-size: 15px; padding: 6px;
+            background: transparent;
+        }
+        .btn-group {
+            display: flex; gap: 8px;
+        }
+        .action-btn {
+            flex: 1; background: #004085; color: white; border: none; padding: 10px;
+            border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center;
+        }
+        .action-btn.secondary { background: #4a5568; }
+
+        /* 하단 상세 정보 카드 (모바일 최적화) */
+        .bottom-card {
+            position: absolute; bottom: -200px; left: 12px; right: 12px; z-index: 10;
+            background: white; padding: 16px; border-radius: 16px;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease;
+        }
+        .bottom-card.active { bottom: 16px; }
+        .card-tag {
+            display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 6px;
+        }
+        .tag-police { background: #ffebe9; color: #d9534f; border: 1px solid #d9534f; }
+        .tag-public { background: #e6f4ff; color: #004085; border: 1px solid #004085; }
+        .card-title { font-size: 16px; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
+        .card-note { font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 10px; }
+        .card-close {
+            position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer;
         }
     </style>
 
-    <!-- defer 속성을 추가하여 스크립트 다운로드 완료까지 안전하게 대기합니다 -->
     <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&autoload=false&libraries=services"></script>
 </head>
 <body>
 
-<div class="header-bar">
-    <h1>🚔 기동대 화장실 지원 지도</h1>
-    <button class="btn-location" onclick="moveToCurrentLocation()">내 위치로 이동</button>
+<div class="top-panel">
+    <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="대사관, 위치, 키워드 검색..." onkeyup="filterToilets()">
+    </div>
+    <div class="btn-group">
+        <button class="action-btn" onclick="moveToCurrentLocation()">📍 내 위치</button>
+        <button class="action-btn secondary" onclick="resetMapView()">🗺️ 전체 보기</button>
+    </div>
 </div>
 
 <div id="map"></div>
 
+<!-- 모바일 전용 하단 카드 -->
+<div id="infoCard" class="bottom-card">
+    <button class="card-close" onclick="closeCard()">✕</button>
+    <span id="cardTag" class="card-tag"></span>
+    <div id="cardTitle" class="card-title"></div>
+    <div id="cardNote" class="card-note"></div>
+</div>
+
 <script>
     let map;
+    let markers = [];
+    
+    // 미국, 일본, 중국 대사관 주변 주요 화장실 데이터
+    const policeToilets = [
+        // --- 미국 대사관 주변 ---
+        {
+            title: "대한민국역사박물관 화장실",
+            lat: 37.5752, lng: 126.9778,
+            note: "미국대사관 바로 옆 / 관람시간 내 개방 (10:00~18:00, 수/토 21:00)",
+            isPoliceOnly: false
+        },
+        {
+            title: "광화문역 지하철 공공화장실",
+            lat: 37.5709, lng: 126.9769,
+            note: "광화문 광장 지하 통로 연결 / 24시간 이용 가능",
+            isPoliceOnly: false
+        },
+        {
+            title: "세종로 공영주차장 지하화장실",
+            lat: 37.5732, lng: 126.9760,
+            note: "광화문 광장 지하 위치 / 24시간 개방",
+            isPoliceOnly: false
+        },
 
-    // 페이지 및 외부 스크립트가 완벽하게 로드된 후 지도를 실행합니다
+        // --- 일본 대사관 (트윈트리타워 / 안국역 주변) ---
+        {
+            title: "트윈트리타워 B동 로비 화장실",
+            lat: 37.5762, lng: 126.9801,
+            note: "일본대사관 공사현장 바로 건너편 / B1층 상가 개방 화장실",
+            isPoliceOnly: true
+        },
+        {
+            title: "열린송현 녹지광장 공중화장실",
+            lat: 37.5768, lng: 126.9818,
+            note: "송현동 부지 내 위치 / 깨끗함, 상시 개방",
+            isPoliceOnly: false
+        },
+        {
+            title: "안국역 지하철 개방화장실",
+            lat: 37.5765, lng: 126.9854,
+            note: "개찰구 밖 위치 / 지하철 운행시간 내 가능",
+            isPoliceOnly: false
+        },
+
+        // --- 중국 대사관 (명동 주변) ---
+        {
+            title: "명동주민센터 개방화장실",
+            lat: 37.5615, lng: 126.9842,
+            note: "중국대사관 후문 인근 / 평일 업무시간 개방",
+            isPoliceOnly: false
+        },
+        {
+            title: "명동 지하쇼핑센터 화장실",
+            lat: 37.5627, lng: 126.9829,
+            note: "중국대사관 정문 진입로 지하 / 상가 운영시간 내 이용",
+            isPoliceOnly: false
+        },
+        {
+            title: "중구 한성화교소학교 옆 개방빌딩",
+            lat: 37.5621, lng: 126.9836,
+            note: "대사관 바로 앞 골목 내 1층 화장실 (경찰 대원 자주 이용)",
+            isPoliceOnly: true
+        }
+    ];
+
     window.onload = function() {
         if (typeof kakao !== 'undefined' && kakao.maps) {
             kakao.maps.load(function() {
                 const mapContainer = document.getElementById('map');
                 const mapOptions = {
-                    center: new kakao.maps.LatLng(37.5759, 126.9768), // 기본 중심점: 광화문 광장
-                    level: 3
+                    center: new kakao.maps.LatLng(37.5700, 126.9800), // 종로/명동 중간 지점
+                    level: 5
                 };
-                
                 map = new kakao.maps.Map(mapContainer, mapOptions);
 
-                // 화장실 정보 데이터 목록
-                const policeToilets = [
-                    {
-                        title: "미국대사관 건너편 빌딩 화장실",
-                        lat: 37.5752,
-                        lng: 126.9775,
-                        note: "개방 협조 완료 / 24시간 가능",
-                        isPoliceOnly: true
-                    },
-                    {
-                        title: "일본대사관 개방 화장실",
-                        lat: 37.5765,
-                        lng: 126.9801,
-                        note: "1층 로비 이용 가능",
-                        isPoliceOnly: false
-                    },
-                    {
-                        title: "경복궁역 경찰 전용 거점",
-                        lat: 37.5768,
-                        lng: 126.9725,
-                        note: "경찰 신분증 제시 후 사용",
-                        isPoliceOnly: true
-                    }
-                ];
-
-                // 마커 및 설명창 생성
-                policeToilets.forEach(toilet => {
-                    const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
-                    const marker = new kakao.maps.Marker({
-                        position: markerPosition,
-                        map: map
-                    });
-
-                    const content = `
-                        <div style="padding:10px; font-size:12px; width:200px;">
-                            <strong style="color:${toilet.isPoliceOnly ? '#d9534f' : '#004085'};">
-                                ${toilet.isPoliceOnly ? '[경찰 우대/전용] ' : ''}${toilet.title}
-                            </strong>
-                            <p style="margin-top:6px; color:#555; line-height:1.3;">${toilet.note}</p>
-                        </div>
-                    `;
-
-                    const infowindow = new kakao.maps.InfoWindow({
-                        content: content,
-                        removable: true
-                    });
-
-                    kakao.maps.event.addListener(marker, 'click', function() {
-                        infowindow.open(map, marker);
-                    });
-                });
+                displayMarkers(policeToilets);
             });
-        } else {
-            alert("카카오 지도 SDK를 불러오지 못했습니다. 카카오 개발자 센터의 '사이트 도메인' 설정을 다시 확인해주세요.");
         }
     };
 
-    // 내 위치 찾기 기능
+    // 마커 생성 및 클릭 이벤트 등록
+    function displayMarkers(data) {
+        // 기존 마커 삭제
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
+        data.forEach(toilet => {
+            const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
+
+            kakao.maps.event.addListener(marker, 'click', function() {
+                showCard(toilet);
+                map.panTo(markerPosition);
+            });
+
+            markers.push(marker);
+        });
+    }
+
+    // 모바일 하단 카드 노출
+    function showCard(toilet) {
+        const card = document.getElementById('infoCard');
+        const tag = document.getElementById('cardTag');
+        const title = document.getElementById('cardTitle');
+        const note = document.getElementById('cardNote');
+
+        if (toilet.isPoliceOnly) {
+            tag.className = 'card-tag tag-police';
+            tag.innerText = '🚨 경찰 협조/거점 화장실';
+        } else {
+            tag.className = 'card-tag tag-public';
+            tag.innerText = '♿ 공공/개방 화장실';
+        }
+
+        title.innerText = toilet.title;
+        note.innerText = toilet.note;
+
+        card.classList.add('active');
+    }
+
+    function closeCard() {
+        document.getElementById('infoCard').classList.remove('active');
+    }
+
+    // 실시간 검색 필터링
+    function filterToilets() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = policeToilets.filter(t => 
+            t.title.toLowerCase().includes(keyword) || 
+            t.note.toLowerCase().includes(keyword)
+        );
+        displayMarkers(filtered);
+    }
+
+    // 현위치 이동
     function moveToCurrentLocation() {
         if (navigator.geolocation && map) {
             navigator.geolocation.getCurrentPosition(position => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const locPosition = new kakao.maps.LatLng(lat, lng);
-
+                const locPosition = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+                map.setLevel(3);
                 map.panTo(locPosition);
             }, () => {
                 alert('현재 위치를 불러올 수 없습니다. GPS 권한을 확인해주세요.');
             });
+        }
+    }
+
+    // 전체보기 (기본 지도 줌)
+    function resetMapView() {
+        if (map) {
+            closeCard();
+            document.getElementById('searchInput').value = '';
+            displayMarkers(policeToilets);
+            map.setLevel(5);
+            map.panTo(new kakao.maps.LatLng(37.5700, 126.9800));
         }
     }
 </script>
