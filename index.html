@@ -1,51 +1,266 @@
-[
-    {
-        "title": "대한민국역사박물관 화장실",
-        "lat": 37.5752,
-        "lng": 126.9778,
-        "note": "미국대사관 바로 옆 / 관람시간 내 개방 (10:00~18:00)",
-        "isPoliceOnly": false
-    },
-    {
-        "title": "광화문역 지하철 공공화장실",
-        "lat": 37.5709,
-        "lng": 126.9769,
-        "note": "광화문 광장 지하 통로 연결 / 24시간 이용 가능",
-        "isPoliceOnly": false
-    },
-    {
-        "title": "세종로 공영주차장 지하화장실",
-        "lat": 37.5732,
-        "lng": 126.976,
-        "note": "광화문 광장 지하 위치 / 24시간 개방",
-        "isPoliceOnly": false
-    },
-    {
-        "title": "트윈트리타워 B동 로비 화장실",
-        "lat": 37.5762,
-        "lng": 126.9801,
-        "note": "일본대사관 공사현장 건너편 / B1층 개방",
-        "isPoliceOnly": true
-    },
-    {
-        "title": "열린송현 녹지광장 공중화장실",
-        "lat": 37.5768,
-        "lng": 126.9818,
-        "note": "송현동 부지 내 위치 / 상시 개방",
-        "isPoliceOnly": false
-    },
-    {
-        "title": "명동주민센터 개방화장실",
-        "lat": 37.5615,
-        "lng": 126.9842,
-        "note": "중국대사관 후문 인근 / 평일 업무시간 개방",
-        "isPoliceOnly": false
-    },
-    {
-        "title": "KT건물 1층",
-        "lat": 37.57197776551543,
-        "lng": 126.97793763820697,
-        "note": "22시이후 사용블가 / 깨끗이 사용 요망",
-        "isPoliceOnly": true
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>기동대 전용 화장실 지원 지도</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+        #map { width: 100%; height: 100vh; }
+
+        /* 상단 UI 패널 */
+        .top-panel {
+            position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .search-box {
+            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px;
+        }
+        .search-box input {
+            width: 100%; border: none; outline: none; font-size: 15px; padding: 6px;
+            background: transparent;
+        }
+        .btn-group {
+            display: flex; gap: 6px;
+        }
+        .action-btn {
+            flex: 1; background: #004085; color: white; border: none; padding: 10px;
+            border-radius: 10px; font-size: 12px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center;
+        }
+        .action-btn.add-mode { background: #d9534f; } /* 추가 모드 버튼 (빨간색) */
+        .action-btn.secondary { background: #4a5568; }
+
+        /* 하단 상세 정보 카드 */
+        .bottom-card {
+            position: absolute; bottom: -250px; left: 12px; right: 12px; z-index: 10;
+            background: white; padding: 16px; border-radius: 16px;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease;
+        }
+        .bottom-card.active { bottom: 16px; }
+        .card-tag {
+            display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 6px;
+        }
+        .tag-police { background: #ffebe9; color: #d9534f; border: 1px solid #d9534f; }
+        .tag-public { background: #e6f4ff; color: #004085; border: 1px solid #004085; }
+        .card-title { font-size: 16px; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
+        .card-note { font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 10px; }
+        .card-close {
+            position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer;
+        }
+
+        /* 입력 팝업 모달 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; width: 100%; max-width: 360px; padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .modal-content h3 { font-size: 16px; margin-bottom: 12px; color: #1a2a3a; }
+        .modal-content input, .modal-content select, .modal-content textarea {
+            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+        .modal-btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .modal-btn-group button {
+            flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        .btn-save { background: #004085; color: white; }
+        .btn-cancel { background: #e2e8f0; color: #4a5568; }
+    </style>
+
+    <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&autoload=false&libraries=services"></script>
+</head>
+<body>
+
+<div class="top-panel">
+    <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="대사관, 위치, 키워드 검색..." onkeyup="filterToilets()">
+    </div>
+    <div class="btn-group">
+        <button class="action-btn" onclick="moveToCurrentLocation()">📍 내 위치</button>
+        <button id="addBtn" class="action-btn add-mode" onclick="toggleAddMode()">➕ 등록 모드: OFF</button>
+        <button class="action-btn secondary" onclick="exportData()">📥 코드 복사</button>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<!-- 모바일 전용 하단 카드 -->
+<div id="infoCard" class="bottom-card">
+    <button class="card-close" onclick="closeCard()">✕</button>
+    <span id="cardTag" class="card-tag"></span>
+    <div id="cardTitle" class="card-title"></div>
+    <div id="cardNote" class="card-note"></div>
+</div>
+
+<!-- 화장실 추가 입력 모달 -->
+<div id="inputModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>➕ 신규 화장실 등록</h3>
+        <input type="text" id="newTitle" placeholder="화장실 이름 (예: 세종로 건물 1층)">
+        <select id="newIsPolice">
+            <option value="true">🚨 경찰 전용/협조 화장실</option>
+            <option value="false">♿ 일반 공공/개방 화장실</option>
+        </select>
+        <textarea id="newNote" rows="3" placeholder="특이사항 (예: 비밀번호 1234*, 24시간 개방)"></textarea>
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal()">취소</button>
+            <button class="btn-save" onclick="saveNewToilet()">저장하기</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let map;
+    let markers = [];
+    let isAddMode = false;
+    let selectedLatLng = null;
+
+    // 기본 화장실 목록
+    const defaultToilets = [
+        { title: "대한민국역사박물관 화장실", lat: 37.5752, lng: 126.9778, note: "미국대사관 바로 옆 / 관람시간 내 개방 (10:00~18:00)", isPoliceOnly: false },
+        { title: "광화문역 지하철 공공화장실", lat: 37.5709, lng: 126.9769, note: "광화문 광장 지하 통로 연결 / 24시간 이용 가능", isPoliceOnly: false },
+        { title: "세종로 공영주차장 지하화장실", lat: 37.5732, lng: 126.9760, note: "광화문 광장 지하 위치 / 24시간 개방", isPoliceOnly: false },
+        { title: "트윈트리타워 B동 로비 화장실", lat: 37.5762, lng: 126.9801, note: "일본대사관 공사현장 건너편 / B1층 개방", isPoliceOnly: true },
+        { title: "열린송현 녹지광장 공중화장실", lat: 37.5768, lng: 126.9818, note: "송현동 부지 내 위치 / 상시 개방", isPoliceOnly: false },
+        { title: "명동주민센터 개방화장실", lat: 37.5615, lng: 126.9842, note: "중국대사관 후문 인근 / 평일 업무시간 개방", isPoliceOnly: false }
+    ];
+
+    // 저장된 데이터 가져오기 (없으면 기본값 사용)
+    let policeToilets = JSON.parse(localStorage.getItem('my_toilet_list')) || defaultToilets;
+
+    window.onload = function() {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+            kakao.maps.load(function() {
+                const mapContainer = document.getElementById('map');
+                const mapOptions = {
+                    center: new kakao.maps.LatLng(37.5700, 126.9800),
+                    level: 5
+                };
+                map = new kakao.maps.Map(mapContainer, mapOptions);
+
+                // 지도 클릭 이벤트 (등록 모드일 때만 동작)
+                kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                    if (isAddMode) {
+                        selectedLatLng = mouseEvent.latLng;
+                        openModal();
+                    }
+                });
+
+                displayMarkers(policeToilets);
+            });
+        }
+    };
+
+    // 등록 모드 토글 기능
+    function toggleAddMode() {
+        isAddMode = !isAddMode;
+        const btn = document.getElementById('addBtn');
+        if (isAddMode) {
+            btn.innerText = "➕ 등록 모드: ON";
+            btn.style.background = "#28a745"; // 녹색 변경
+            alert("지도의 원하는 화장실 위치를 직접 터치(클릭)해주세요.");
+        } else {
+            btn.innerText = "➕ 등록 모드: OFF";
+            btn.style.background = "#d9534f"; // 빨간색 변경
+        }
     }
-]
+
+    function openModal() { document.getElementById('inputModal').classList.add('active'); }
+    function closeModal() { document.getElementById('inputModal').classList.remove('active'); }
+
+    // 새로운 화장실 데이터 저장
+    function saveNewToilet() {
+        const title = document.getElementById('newTitle').value.trim();
+        const note = document.getElementById('newNote').value.trim();
+        const isPoliceOnly = document.getElementById('newIsPolice').value === 'true';
+
+        if (!title) {
+            alert('화장실 이름을 입력해주세요.');
+            return;
+        }
+
+        const newToilet = {
+            title: title,
+            lat: selectedLatLng.getLat(),
+            lng: selectedLatLng.getLng(),
+            note: note || '등록된 내용 없음',
+            isPoliceOnly: isPoliceOnly
+        };
+
+        policeToilets.push(newToilet);
+        localStorage.setItem('my_toilet_list', JSON.stringify(policeToilets)); // 로컬에 저장
+
+        displayMarkers(policeToilets);
+        closeModal();
+
+        // 입력 폼 초기화
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newNote').value = '';
+        
+        alert('화장실이 추가되었습니다!');
+    }
+
+    // 마커 표시
+    function displayMarkers(data) {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
+        data.forEach(toilet => {
+            const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
+
+            kakao.maps.event.addListener(marker, 'click', function() {
+                showCard(toilet);
+                map.panTo(markerPosition);
+            });
+
+            markers.push(marker);
+        });
+    }
+
+    function showCard(toilet) {
+        const card = document.getElementById('infoCard');
+        document.getElementById('cardTag').className = toilet.isPoliceOnly ? 'card-tag tag-police' : 'card-tag tag-public';
+        document.getElementById('cardTag').innerText = toilet.isPoliceOnly ? '🚨 경찰 협조/거점 화장실' : '♿ 공공/개방 화장실';
+        document.getElementById('cardTitle').innerText = toilet.title;
+        document.getElementById('cardNote').innerText = toilet.note;
+        card.classList.add('active');
+    }
+
+    function closeCard() { document.getElementById('infoCard').classList.remove('active'); }
+
+    function filterToilets() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = policeToilets.filter(t => t.title.toLowerCase().includes(keyword) || t.note.toLowerCase().includes(keyword));
+        displayMarkers(filtered);
+    }
+
+    function moveToCurrentLocation() {
+        if (navigator.geolocation && map) {
+            navigator.geolocation.getCurrentPosition(position => {
+                map.setLevel(3);
+                map.panTo(new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude));
+            });
+        }
+    }
+
+    // [관리자용] 내가 추가한 목록을 소스코드로 쉽게 내보내는 기능
+    function exportData() {
+        const codeText = JSON.stringify(policeToilets, null, 4);
+        navigator.clipboard.writeText(codeText).then(() => {
+            alert("현재 추가된 전체 화장실 데이터(JSON)가 클립보드에 복사되었습니다.\nGitHub의 index.html 소스코드에 붙여넣으시면 모든 대원에게 영구 반영됩니다.");
+        });
+    }
+</script>
+</body>
+</html>
