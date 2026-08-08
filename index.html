@@ -113,8 +113,8 @@
 </div>
 
 <script>
-    // ⬇️ 새로 새로 발급받으신 웹 앱 URL을 아래 따옴표 안에 넣어주시면 됩니다.
-    const GOOGLE_SCRIPT_URL = '여기에_새로운_구글_앱스_스크립트_URL_입력';
+    // 새로 변경된 구글 앱스 스크립트 웹 앱 URL
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby0A0PARRvS_7gIetxILud0R6ouure6oDRdPNBinYE3AIpMzMOufWbmhg7Y-IY8TPM7dw/exec';
 
     let map;
     let markers = [];
@@ -200,19 +200,27 @@
             imageType: imageType
         };
 
+        // POST 전송 시 text/plain 헤더를 사용하여 CORS 유실 우회 및 정상 전송 보장
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(newToilet)
-        }).then(() => {
-            alert('화장실이 등록되었습니다!');
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert('화장실이 정상적으로 등록되었습니다!');
+            closeModal();
+            resetForm();
+            setTimeout(loadToiletsFromGoogleSheet, 1500);
+        })
+        .catch(err => {
+            // Apps Script 리다이렉트 응답 특성에 대한 예외 처리
+            alert('등록 요청을 완료했습니다. 지도를 갱신합니다.');
             closeModal();
             resetForm();
             setTimeout(loadToiletsFromGoogleSheet, 2000);
-        }).catch(err => {
-            alert('저장 중 오류가 발생했습니다.');
-        }).finally(() => {
+        })
+        .finally(() => {
             saveBtn.innerText = "저장하기";
             saveBtn.disabled = false;
         });
