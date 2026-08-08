@@ -245,22 +245,26 @@
             imageType: 'image/jpeg'
         };
 
-        // 3. fetch 요청 시 application/json을 text/plain으로 수정하여 CORS 에러 해결
+        // 3. fetch 코드 수정: mode: 'no-cors' 제거하고 JSON 응답을 받아 에러 파악
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(newToilet)
         })
-        .then(() => {
-            alert('등록 요청이 전송되었습니다!');
-            closeModal();
-            resetForm();
-            setTimeout(loadToiletsFromGoogleSheet, 3000);
+        .then(res => res.json())
+        .then(data => {
+            if (data.result === 'success') {
+                alert('등록 요청이 전송되었습니다!');
+                closeModal();
+                resetForm();
+                setTimeout(loadToiletsFromGoogleSheet, 3000);
+            } else {
+                // 앱스 스크립트에서 보낸 실제 에러 메시지 출력
+                alert('서버 저장 실패: ' + data.message); 
+            }
         })
         .catch(err => {
-            // 4. 잘못된 성공 알림을 진짜 에러 알림으로 수정
-            alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+            alert('통신 중 오류가 발생했습니다. 다시 시도해주세요.');
             console.error(err);
         })
         .finally(() => {
@@ -324,7 +328,7 @@
             imgTag.src = toilet.imageUrl;
             imgTag.style.display = 'block';
             
-            // 5. 클릭 시 크게 보기 이벤트 추가
+            // 4. 클릭 시 크게 보기 이벤트 추가
             imgTag.onclick = function() {
                 openImageViewer(toilet.imageUrl);
             };
@@ -353,7 +357,7 @@
         }
     }
 
-    // 6. 이미지 뷰어 열기/닫기 함수 추가
+    // 5. 이미지 뷰어 열기/닫기 함수 추가
     function openImageViewer(imgSrc) {
         document.getElementById('expandedImage').src = imgSrc;
         document.getElementById('imageViewerModal').classList.add('active');
