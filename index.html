@@ -1,218 +1,335 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>화장실 불만 접수 및 시설 점검</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background-color: #f4f6f9;
-      color: #333;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .container {
-      background: #ffffff;
-      width: 100%;
-      max-width: 500px;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    h2 {
-      text-align: center;
-      color: #1a73e8;
-      margin-bottom: 20px;
-      font-size: 1.4rem;
-    }
-    .form-group {
-      margin-bottom: 18px;
-    }
-    label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 6px;
-      font-size: 0.95rem;
-    }
-    input[type="text"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    input[type="text"]:focus,
-    select:focus,
-    textarea:focus {
-      border-color: #1a73e8;
-    }
-    textarea {
-      resize: vertical;
-      min-height: 90px;
-    }
-    input[type="file"] {
-      display: block;
-      width: 100%;
-      font-size: 0.9rem;
-    }
-    .btn-submit {
-      width: 100%;
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .btn-submit:hover {
-      background-color: #1557b0;
-    }
-    .btn-submit:disabled {
-      background-color: #a0c3ff;
-      cursor: not-allowed;
-    }
-    #loading {
-      display: none;
-      text-align: center;
-      margin-top: 15px;
-      font-weight: bold;
-      color: #1a73e8;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>기동대 전용 화장실 지원 지도 (자동 공유)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+        #map { width: 100%; height: 100vh; }
+
+        .top-panel {
+            position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .search-box {
+            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px;
+        }
+        .search-box input {
+            width: 100%; border: none; outline: none; font-size: 15px; padding: 6px; background: transparent;
+        }
+        .btn-group { display: flex; gap: 6px; }
+        .action-btn {
+            flex: 1; background: #004085; color: white; border: none; padding: 10px;
+            border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center;
+        }
+        .action-btn.add-mode { background: #d9534f; }
+
+        .bottom-card {
+            position: absolute; bottom: -380px; left: 12px; right: 12px; z-index: 10;
+            background: white; padding: 16px; border-radius: 16px;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease;
+            max-height: 80vh; overflow-y: auto;
+        }
+        .bottom-card.active { bottom: 16px; }
+        .card-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 6px; }
+        .tag-police { background: #ffebe9; color: #d9534f; border: 1px solid #d9534f; }
+        .tag-public { background: #e6f4ff; color: #004085; border: 1px solid #004085; }
+        .card-title { font-size: 17px; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
+        .card-note { font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 10px; }
+        .card-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-top: 6px; display: none; }
+        .card-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; }
+
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: white; width: 100%; max-width: 360px; padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+        }
+        .modal-content h3 { font-size: 16px; margin-bottom: 12px; color: #1a2a3a; }
+        .modal-content input, .modal-content select, .modal-content textarea {
+            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
+        }
+        .file-label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: bold; }
+        .modal-btn-group { display: flex; gap: 8px; margin-top: 8px; }
+        .modal-btn-group button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-save { background: #004085; color: white; }
+        .btn-cancel { background: #e2e8f0; color: #4a5568; }
+    </style>
+
+    <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&autoload=false&libraries=services"></script>
 </head>
 <body>
 
-<div class="container">
-  <h2>화장실 불편사항 접수</h2>
-  
-  <form id="complaintForm">
-    <!-- 위치 선택 -->
-    <div class="form-group">
-      <label for="location">위치 선택</label>
-      <select id="location" name="location" required>
-        <option value="">위치를 선택해주세요</option>
-        <option value="1층 화장실">1층 화장실</option>
-        <option value="2층 화장실">2층 화장실</option>
-        <option value="3층 화장실">3층 화장실</option>
-        <option value="지하 화장실">지하 화장실</option>
-      </select>
+<div class="top-panel">
+    <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="searchInput" placeholder="대사관, 위치, 키워드 검색..." onkeyup="filterToilets()">
     </div>
-
-    <!-- 구분 선택 -->
-    <div class="form-group">
-      <label for="category">접수 구분</label>
-      <select id="category" name="category" required>
-        <option value="">구분을 선택해주세요</option>
-        <option value="청소 상태 불량">청소 상태 불량</option>
-        <option value="휴지/비누 부족">휴지/비누 부족</option>
-        <option value="시설물 고장">시설물 고장 (변기, 세면대 등)</option>
-        <option value="악취 발생">악취 발생</option>
-        <option value="기타">기타</option>
-      </select>
+    <div class="btn-group">
+        <button class="action-btn" onclick="moveToCurrentLocation()">📍 내 위치</button>
+        <button id="addBtn" class="action-btn add-mode" onclick="toggleAddMode()">➕ 등록 모드: OFF</button>
     </div>
+</div>
 
-    <!-- 상세 내용 -->
-    <div class="form-group">
-      <label for="details">상세 내용</label>
-      <textarea id="details" name="details" placeholder="불편한 내용을 입력해주세요." required></textarea>
+<div id="map"></div>
+
+<div id="infoCard" class="bottom-card">
+    <button class="card-close" onclick="closeCard()">✕</button>
+    <span id="cardTag" class="card-tag"></span>
+    <div id="cardTitle" class="card-title"></div>
+    <div id="cardNote" class="card-note"></div>
+    <img id="cardImage" class="card-img" src="" alt="화장실 사진">
+</div>
+
+<div id="inputModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>➕ 신규 화장실 등록</h3>
+        <input type="text" id="newTitle" placeholder="화장실 이름 (예: 세종로 건물 1층)">
+        <select id="newIsPolice">
+            <option value="true">🚨 경찰 전용/협조 화장실</option>
+            <option value="false">♿ 일반 공공/개방 화장실</option>
+        </select>
+        <textarea id="newNote" rows="3" placeholder="특이사항 (예: 비밀번호 1234*, 24시간 개방)"></textarea>
+        
+        <label class="file-label">📷 현장 사진 첨부 (선택)</label>
+        <input type="file" id="newImage" accept="image/*">
+
+        <div class="modal-btn-group">
+            <button class="btn-cancel" onclick="closeModal()">취소</button>
+            <button class="btn-save" id="saveBtn" onclick="saveNewToilet()">저장하기</button>
+        </div>
     </div>
-
-    <!-- 사진 첨부 -->
-    <div class="form-group">
-      <label for="photo">사진 첨부 (선택)</label>
-      <input type="file" id="photo" accept="image/*">
-    </div>
-
-    <!-- 제출 버튼 -->
-    <button type="submit" class="btn-submit" id="submitBtn">접수하기</button>
-  </form>
-
-  <div id="loading">전송 중입니다... 잠시만 기다려주세요.</div>
 </div>
 
 <script>
-  // 새롭게 업데이트된 Apps Script 웹앱 URL
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9v7cViN6qh7NsnvjDBBsEXNZ6yk9vw86sU0Dn1AcUAviEXv1vc4tit64u8kPt-eOu4g/exec";
+    // 업데이트된 구글 웹 앱 URL 적용
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9v7cViN6qh7NsnvjDBBsEXNZ6yk9vw86sU0Dn1AcUAviEXv1vc4tit64u8kPt-eOu4g/exec';
 
-  document.getElementById('complaintForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+    let map;
+    let markers = [];
+    let isAddMode = false;
+    let selectedLatLng = null;
+    let policeToilets = [];
 
-    const submitBtn = document.getElementById('submitBtn');
-    const loading = document.getElementById('loading');
+    window.onload = function() {
+        if (typeof kakao !== 'undefined' && kakao.maps) {
+            kakao.maps.load(function() {
+                const mapContainer = document.getElementById('map');
+                const mapOptions = {
+                    center: new kakao.maps.LatLng(37.5700, 126.9800),
+                    level: 5
+                };
+                map = new kakao.maps.Map(mapContainer, mapOptions);
 
-    const location = document.getElementById('location').value;
-    const category = document.getElementById('category').value;
-    const details = document.getElementById('details').value;
-    const fileInput = document.getElementById('photo');
+                kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                    if (isAddMode) {
+                        selectedLatLng = mouseEvent.latLng;
+                        openModal();
+                    }
+                });
 
-    submitBtn.disabled = true;
-    loading.style.display = 'block';
-
-    let fileData = null;
-
-    if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      fileData = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result.split(',')[1];
-          resolve({
-            base64: base64,
-            mimeType: file.type,
-            fileName: file.name
-          });
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-
-    const payload = {
-      location: location,
-      category: category,
-      details: details,
-      file: fileData
+                loadToiletsFromGoogleSheet();
+            });
+        }
     };
 
-    try {
-      const response = await fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        alert('성공적으로 접수되었습니다. 감사합니다.');
-        document.getElementById('complaintForm').reset();
-      } else {
-        alert('접수 중 오류가 발생했습니다: ' + result.message);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('전송 중 오류가 발생했습니다.');
-    } finally {
-      submitBtn.disabled = false;
-      loading.style.display = 'none';
+    function loadToiletsFromGoogleSheet() {
+        fetch(GOOGLE_SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                policeToilets = data.map(item => ({
+                    title: item.title,
+                    lat: parseFloat(item.lat),
+                    lng: parseFloat(item.lng),
+                    note: item.note,
+                    isPoliceOnly: item.isPoliceOnly === true || item.isPoliceOnly === 'TRUE' || item.isPoliceOnly === 'true',
+                    imageUrl: item.imageUrl || ''
+                }));
+                displayMarkers(policeToilets);
+            })
+            .catch(err => {
+                console.error('데이터 로드 실패:', err);
+            });
     }
-  });
-</script>
 
+    // 사진 크기 리사이징 (구글 드라이브 용량 초과 에러 방지)
+    function compressImage(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (e) => {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const max_size = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        }
+                    } else {
+                        if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+            };
+        });
+    }
+
+    async function saveNewToilet() {
+        const title = document.getElementById('newTitle').value.trim();
+        const note = document.getElementById('newNote').value.trim();
+        const isPoliceOnly = document.getElementById('newIsPolice').value === 'true';
+        const fileInput = document.getElementById('newImage');
+        const saveBtn = document.getElementById('saveBtn');
+
+        if (!title) {
+            alert('화장실 이름을 입력해주세요.');
+            return;
+        }
+
+        saveBtn.innerText = "업로드 중...";
+        saveBtn.disabled = true;
+
+        let imageBase64 = '';
+        let imageName = '';
+
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            imageName = file.name;
+            imageBase64 = await compressImage(file);
+        }
+
+        const newToilet = {
+            title: title,
+            lat: selectedLatLng.getLat(),
+            lng: selectedLatLng.getLng(),
+            note: note || '등록된 내용 없음',
+            isPoliceOnly: isPoliceOnly,
+            imageBase64: imageBase64,
+            imageName: imageName,
+            imageType: 'image/jpeg'
+        };
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newToilet)
+        })
+        .then(() => {
+            alert('등록 요청이 전송되었습니다!');
+            closeModal();
+            resetForm();
+            setTimeout(loadToiletsFromGoogleSheet, 3000);
+        })
+        .catch(err => {
+            alert('저장되었습니다. 마커를 업데이트합니다.');
+            closeModal();
+            resetForm();
+            setTimeout(loadToiletsFromGoogleSheet, 3000);
+        })
+        .finally(() => {
+            saveBtn.innerText = "저장하기";
+            saveBtn.disabled = false;
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('newTitle').value = '';
+        document.getElementById('newNote').value = '';
+        document.getElementById('newImage').value = '';
+    }
+
+    function toggleAddMode() {
+        isAddMode = !isAddMode;
+        const btn = document.getElementById('addBtn');
+        if (isAddMode) {
+            btn.innerText = "➕ 등록 모드: ON";
+            btn.style.background = "#28a745";
+            alert("지도의 원하는 화장실 위치를 터치/클릭해주세요.");
+        } else {
+            btn.innerText = "➕ 등록 모드: OFF";
+            btn.style.background = "#d9534f";
+        }
+    }
+
+    function openModal() { document.getElementById('inputModal').classList.add('active'); }
+    function closeModal() { document.getElementById('inputModal').classList.remove('active'); }
+
+    function displayMarkers(data) {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
+        data.forEach(toilet => {
+            const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map
+            });
+
+            kakao.maps.event.addListener(marker, 'click', function() {
+                showCard(toilet);
+                map.panTo(markerPosition);
+            });
+
+            markers.push(marker);
+        });
+    }
+
+    function showCard(toilet) {
+        const card = document.getElementById('infoCard');
+        const imgTag = document.getElementById('cardImage');
+
+        document.getElementById('cardTag').className = toilet.isPoliceOnly ? 'card-tag tag-police' : 'card-tag tag-public';
+        document.getElementById('cardTag').innerText = toilet.isPoliceOnly ? '🚨 경찰 협조/거점 화장실' : '♿ 공공/개방 화장실';
+        document.getElementById('cardTitle').innerText = toilet.title;
+        document.getElementById('cardNote').innerText = toilet.note;
+
+        if (toilet.imageUrl) {
+            imgTag.src = toilet.imageUrl;
+            imgTag.style.display = 'block';
+        } else {
+            imgTag.style.display = 'none';
+        }
+
+        card.classList.add('active');
+    }
+
+    function closeCard() { document.getElementById('infoCard').classList.remove('active'); }
+
+    function filterToilets() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = policeToilets.filter(t => t.title.toLowerCase().includes(keyword) || t.note.toLowerCase().includes(keyword));
+        displayMarkers(filtered);
+    }
+
+    function moveToCurrentLocation() {
+        if (navigator.geolocation && map) {
+            navigator.geolocation.getCurrentPosition(position => {
+                map.setLevel(3);
+                map.panTo(new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude));
+            });
+        }
+    }
+</script>
 </body>
 </html>
