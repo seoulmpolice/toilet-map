@@ -1,5 +1,3 @@
-Html
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -42,7 +40,18 @@ Html
         .tag-public { background: #e6f4ff; color: #004085; border: 1px solid #004085; }
         .card-title { font-size: 17px; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
         .card-note { font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 10px; }
-        .card-img { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-top: 6px; display: none; }
+        
+        /* 1. 이미지 작게 표시되도록 스타일 수정 */
+        .card-img { 
+            width: 80px; 
+            height: 80px; 
+            object-fit: cover; 
+            border-radius: 10px; 
+            margin-top: 10px; 
+            display: none; 
+            cursor: pointer; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
         .card-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; }
 
         .modal-overlay {
@@ -108,6 +117,11 @@ Html
             <button class="btn-save" id="saveBtn" onclick="saveNewToilet()">저장하기</button>
         </div>
     </div>
+</div>
+
+<!-- 2. 이미지 클릭 시 크게 보여줄 모달 창 추가 -->
+<div id="imageViewerModal" class="modal-overlay" onclick="closeImageViewer()">
+    <img id="expandedImage" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px;">
 </div>
 
 <script>
@@ -231,10 +245,11 @@ Html
             imageType: 'image/jpeg'
         };
 
+        // 3. fetch 요청 시 application/json을 text/plain으로 수정하여 CORS 에러 해결
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify(newToilet)
         })
         .then(() => {
@@ -244,10 +259,9 @@ Html
             setTimeout(loadToiletsFromGoogleSheet, 3000);
         })
         .catch(err => {
-            alert('저장되었습니다. 마커를 업데이트합니다.');
-            closeModal();
-            resetForm();
-            setTimeout(loadToiletsFromGoogleSheet, 3000);
+            // 4. 잘못된 성공 알림을 진짜 에러 알림으로 수정
+            alert('업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+            console.error(err);
         })
         .finally(() => {
             saveBtn.innerText = "저장하기";
@@ -309,8 +323,14 @@ Html
         if (toilet.imageUrl) {
             imgTag.src = toilet.imageUrl;
             imgTag.style.display = 'block';
+            
+            // 5. 클릭 시 크게 보기 이벤트 추가
+            imgTag.onclick = function() {
+                openImageViewer(toilet.imageUrl);
+            };
         } else {
             imgTag.style.display = 'none';
+            imgTag.onclick = null; // 이미지가 없을 때 이벤트 초기화
         }
 
         card.classList.add('active');
@@ -331,6 +351,16 @@ Html
                 map.panTo(new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude));
             });
         }
+    }
+
+    // 6. 이미지 뷰어 열기/닫기 함수 추가
+    function openImageViewer(imgSrc) {
+        document.getElementById('expandedImage').src = imgSrc;
+        document.getElementById('imageViewerModal').classList.add('active');
+    }
+
+    function closeImageViewer() {
+        document.getElementById('imageViewerModal').classList.remove('active');
     }
 </script>
 </body>
