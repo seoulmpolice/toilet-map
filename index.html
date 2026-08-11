@@ -58,7 +58,8 @@
         <div class="modal-content">
             <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
             <h2 style="color:#003478; margin-top:0;">신규 화장실 등록</h2>
-            <p style="font-size: 12px; color: gray;">※ 현재 지도 중심 좌표로 등록됩니다.</p>
+            <!-- 사용자가 직접 지정한 핀의 위치로 등록된다는 안내문구로 수정 -->
+            <p style="font-size: 12px; color: #d32f2f; font-weight: bold;">※ 직접 이동하신 핀의 위치로 등록됩니다.</p>
             <input type="text" id="regName" placeholder="화장실 이름 (예: OO빌딩 1층)" required>
             <input type="text" id="regAddress" placeholder="대략적인 주소">
             <select id="regType">
@@ -91,12 +92,13 @@
     </div>
 
     <script>
-        // 새로 발급받으신 웹 앱 URL 적용 완료
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpuq5yZ9-ddVjC8YRsZLPbf2C2wNPK04jnSmLgx4wzl-qjMSnTGlUJokDDqt3SVBd7cQ/exec'; 
+        // 새로 발급받으신 URL로 업데이트 완료!
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwTExTz-4N4E2lk38t4ESKLdW463QKH951BPGyp-pMiq4AnrbD2ZatJIOjL1NoDfDb8pw/exec'; 
         
         let map;
         let loggedInUser = null;
         let toiletsData = [];
+        let registerMarker = null; // ★ 위치 지정을 위한 드래그 가능한 마커 변수 추가
 
         // 1. 지도 초기화
         window.onload = function() {
@@ -164,7 +166,7 @@
             document.getElementById('infoModal').style.display = 'block';
         }
 
-        // 5. 로그인 처리
+        // 5. 로그인 처리 및 등록 마커 생성 기능 부여
         async function login() {
             let id = document.getElementById('adminId').value;
             let pw = document.getElementById('adminPw').value;
@@ -182,14 +184,34 @@
                 
                 let result = await response.json();
                 if(result.success) {
-                    alert(`${result.name}님 환영합니다. 이제 지도에서 화장실을 등록할 수 있습니다.`);
+                    alert(`${result.name}님 환영합니다. [새 화장실 등록] 버튼을 누르면 지도에 핀을 꽂을 수 있습니다.`);
                     loggedInUser = id;
                     document.getElementById('loginModal').style.display = 'none';
                     
                     let adminBtn = document.getElementById('btn-admin');
                     adminBtn.innerText = "➕ 새 화장실 등록";
                     adminBtn.style.background = "#d32f2f";
-                    adminBtn.onclick = function() { document.getElementById('registerModal').style.display='block'; };
+                    
+                    // ★ 수정된 로직: 등록 버튼을 누르면 지도 중앙에 '드래그 가능한 핀'이 생성됩니다.
+                    adminBtn.onclick = function() { 
+                        if(registerMarker) {
+                            registerMarker.setMap(null); // 기존에 띄운 핀이 있다면 제거
+                        }
+
+                        alert("📍 지도 중앙에 위치 지정용 핀이 생성되었습니다.\n원하는 위치로 핀을 드래그한 후, 핀을 클릭하면 등록 창이 열립니다.");
+
+                        let center = map.getCenter();
+                        registerMarker = new kakao.maps.Marker({
+                            map: map,
+                            position: center,
+                            draggable: true // 사용자가 직접 핀을 끌어서 이동시킬 수 있음!
+                        });
+
+                        // 드래그한 핀을 클릭했을 때 모달창(등록 폼)이 뜨도록 이벤트 추가
+                        kakao.maps.event.addListener(registerMarker, 'click', function() {
+                            document.getElementById('registerModal').style.display = 'block';
+                        });
+                    };
                 } else {
                     alert(result.message);
                 }
@@ -219,7 +241,9 @@
             btn.innerText = "업로드 중... (사진이 많으면 오래 걸립니다)";
             btn.disabled = true;
 
-            let center = map.getCenter();
+            // ★ 수정된 로직: 단순히 지도 중앙이 아니라, 사용자가 직접 드래그한 '핀의 위치(좌표)'를 가져옵니다.
+            let position = registerMarker.getPosition();
+            
             let files = document.getElementById('regImages').files;
             let base64Images = [];
             for(let i=0; i<Math.min(files.length, 4); i++) {
@@ -232,8 +256,8 @@
                 userId: loggedInUser,
                 name: name,
                 address: document.getElementById('regAddress').value,
-                lat: center.getLat(),
-                lng: center.getLng(),
+                lat: position.getLat(),
+                lng: position.getLng(),
                 type: document.getElementById('regType').value,
                 password: document.getElementById('regPassword').value,
                 hours: document.getElementById('regHours').value,
