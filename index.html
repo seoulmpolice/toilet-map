@@ -3,369 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>기동대 전용 화장실 지원 지도 (자동 공유)</title>
+    <title>서울경찰 기동대 화장실 지도</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100vh; }
-
-        .top-panel {
-            position: absolute; top: 12px; left: 12px; right: 12px; z-index: 10;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .search-box {
-            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 8px;
-        }
-        .search-box input {
-            width: 100%; border: none; outline: none; font-size: 15px; padding: 6px; background: transparent;
-        }
-        .btn-group { display: flex; gap: 6px; }
-        .action-btn {
-            flex: 1; background: #004085; color: white; border: none; padding: 10px;
-            border-radius: 10px; font-size: 13px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2); text-align: center;
-        }
-        .action-btn.add-mode { background: #d9534f; }
-
-        .bottom-card {
-            position: absolute; bottom: -380px; left: 12px; right: 12px; z-index: 10;
-            background: white; padding: 16px; border-radius: 16px;
-            box-shadow: 0 -4px 16px rgba(0,0,0,0.2); transition: bottom 0.3s ease;
-            max-height: 80vh; overflow-y: auto;
-        }
-        .bottom-card.active { bottom: 16px; }
-        .card-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; margin-bottom: 6px; }
-        .tag-police { background: #ffebe9; color: #d9534f; border: 1px solid #d9534f; }
-        .tag-public { background: #e6f4ff; color: #004085; border: 1px solid #004085; }
-        .card-title { font-size: 17px; font-weight: bold; color: #1a2a3a; margin-bottom: 4px; }
-        .card-note { font-size: 13px; color: #4a5568; line-height: 1.4; margin-bottom: 10px; }
         
-        /* 1. 이미지 작게 표시되도록 스타일 수정 */
-        .card-img { 
-            width: 80px; 
-            height: 80px; 
-            object-fit: cover; 
-            border-radius: 10px; 
-            margin-top: 10px; 
-            display: none; 
-            cursor: pointer; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .card-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 18px; color: #888; cursor: pointer; }
+        /* 플로팅 버튼 (내 위치, 관리자 로그인) */
+        .btn-floating { position: fixed; z-index: 10; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; }
+        #btn-myloc { bottom: 20px; right: 20px; }
+        #btn-admin { top: 20px; right: 20px; background: #003478; color: white; }
 
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; padding: 20px;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: white; width: 100%; max-width: 360px; padding: 20px; border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
-        }
-        .modal-content h3 { font-size: 16px; margin-bottom: 12px; color: #1a2a3a; }
-        .modal-content input, .modal-content select, .modal-content textarea {
-            width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;
-        }
-        .file-label { display: block; font-size: 12px; color: #666; margin-bottom: 4px; font-weight: bold; }
-        .modal-btn-group { display: flex; gap: 8px; margin-top: 8px; }
-        .modal-btn-group button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-save { background: #004085; color: white; }
-        .btn-cancel { background: #e2e8f0; color: #4a5568; }
+        /* 모달 공통 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
+        .modal-content { background: white; width: 90%; max-width: 400px; margin: 10% auto; padding: 20px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .close-btn { float: right; cursor: pointer; font-size: 20px; }
+        
+        /* 폼 스타일 */
+        input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+
+        /* 화장실 상세 정보 모달 */
+        .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 10px; }
+        .info-row { margin-bottom: 5px; font-size: 14px; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; margin-bottom: 10px;}
+        .badge-police { background: #d32f2f; }
+        .badge-public { background: #1976d2; }
+        
+        /* 이미지 스크롤 (Carousel) */
+        .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
+        .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; }
     </style>
-
-    <script defer src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=eaa892e3406c57a6eeae4b8f6644bb09&autoload=false&libraries=services"></script>
+    <!-- 카카오맵 API -->
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
 <body>
 
-<div class="top-panel">
-    <div class="search-box">
-        <span>🔍</span>
-        <input type="text" id="searchInput" placeholder="대사관, 위치, 키워드 검색..." onkeyup="filterToilets()">
-    </div>
-    <div class="btn-group">
-        <button class="action-btn" onclick="moveToCurrentLocation()">📍 내 위치</button>
-        <button id="addBtn" class="action-btn add-mode" onclick="toggleAddMode()">➕ 등록 모드: OFF</button>
-    </div>
-</div>
+    <div id="map"></div>
+    <button id="btn-admin" class="btn-floating" onclick="document.getElementById('loginModal').style.display='block'">관리자 접속</button>
+    <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
 
-<div id="map"></div>
-
-<div id="infoCard" class="bottom-card">
-    <button class="card-close" onclick="closeCard()">✕</button>
-    <span id="cardTag" class="card-tag"></span>
-    <div id="cardTitle" class="card-title"></div>
-    <div id="cardNote" class="card-note"></div>
-    <img id="cardImage" class="card-img" src="" alt="화장실 사진">
-</div>
-
-<div id="inputModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>➕ 신규 화장실 등록</h3>
-        <input type="text" id="newTitle" placeholder="화장실 이름 (예: 세종로 건물 1층)">
-        <select id="newIsPolice">
-            <option value="true">🚨 경찰 전용/협조 화장실</option>
-            <option value="false">♿ 일반 공공/개방 화장실</option>
-        </select>
-        <textarea id="newNote" rows="3" placeholder="특이사항 (예: 비밀번호 1234*, 24시간 개방)"></textarea>
-        
-        <label class="file-label">📷 현장 사진 첨부 (선택)</label>
-        <input type="file" id="newImage" accept="image/*">
-
-        <div class="modal-btn-group">
-            <button class="btn-cancel" onclick="closeModal()">취소</button>
-            <button class="btn-save" id="saveBtn" onclick="saveNewToilet()">저장하기</button>
+    <!-- 1. 로그인 모달 -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
+            <h2 style="color:#003478; margin-top:0;">관리자 로그인</h2>
+            <input type="text" id="adminId" placeholder="아이디">
+            <input type="password" id="adminPw" placeholder="비밀번호">
+            <button class="submit-btn" onclick="login()">로그인</button>
         </div>
     </div>
-</div>
 
-<!-- 2. 이미지 클릭 시 크게 보여줄 모달 창 추가 -->
-<div id="imageViewerModal" class="modal-overlay" onclick="closeImageViewer()">
-    <img id="expandedImage" style="max-width: 95%; max-height: 95%; object-fit: contain; border-radius: 8px;">
-</div>
+    <!-- 2. 화장실 등록 모달 -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
+            <h2 style="color:#003478; margin-top:0;">신규 화장실 등록</h2>
+            <p style="font-size: 12px; color: gray;">※ 현재 지도 중심 좌표로 등록됩니다.</p>
+            <input type="text" id="regName" placeholder="화장실 이름 (예: OO빌딩 1층)" required>
+            <input type="text" id="regAddress" placeholder="대략적인 주소">
+            <select id="regType">
+                <option value="경찰전용/협조">경찰전용/협조 화장실</option>
+                <option value="공공개방">일반 공공개방 화장실</option>
+            </select>
+            <input type="text" id="regPassword" placeholder="비밀번호 (없으면 공란)">
+            <input type="text" id="regHours" placeholder="운영시간 (예: 24시간, 09:00~18:00)">
+            <select id="regBidet">
+                <option value="비데 모름/없음">비데 유무 선택</option>
+                <option value="비데 있음">비데 있음</option>
+                <option value="비데 없음">비데 없음</option>
+            </select>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="regToilet" placeholder="대변기 수">
+                <input type="number" id="regUrinal" placeholder="소변기 수">
+            </div>
+            <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 (최대 4장)</label>
+            <input type="file" id="regImages" accept="image/*" multiple>
+            
+            <button class="submit-btn" style="margin-top:20px;" onclick="registerToilet()">등록하기</button>
+        </div>
+    </div>
 
-<script>
-    // 업데이트된 구글 웹 앱 URL 적용
-    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXRdwAlJBgXe8LEkyxlK1nxrvGDZsaXTdHpJ2lct87wnsqnQy2sYXvNRmx32F57HAwfA/exec';
+    <!-- 3. 상세정보 모달 -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content" id="infoContent">
+            <!-- 자바스크립트로 내용 채워짐 -->
+        </div>
+    </div>
 
-    let map;
-    let markers = [];
-    let isAddMode = false;
-    let selectedLatLng = null;
-    let policeToilets = [];
+    <script>
+        // 발급받으신 웹 앱 URL 적용
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyhqTserl-7CN5LIp3qWXFeEafawVmXuqwjJg61dmCwE3KK2di31vUvxf3sEv-mNDssQ/exec'; 
+        
+        let map;
+        let loggedInUser = null;
+        let toiletsData = [];
 
-    window.onload = function() {
-        if (typeof kakao !== 'undefined' && kakao.maps) {
-            kakao.maps.load(function() {
-                const mapContainer = document.getElementById('map');
-                const mapOptions = {
-                    center: new kakao.maps.LatLng(37.5700, 126.9800),
-                    level: 5
-                };
-                map = new kakao.maps.Map(mapContainer, mapOptions);
-
-                kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
-                    if (isAddMode) {
-                        selectedLatLng = mouseEvent.latLng;
-                        openModal();
-                    }
-                });
-
-                loadToiletsFromGoogleSheet();
-            });
-        }
-    };
-
-    function loadToiletsFromGoogleSheet() {
-        fetch(GOOGLE_SCRIPT_URL)
-            .then(res => res.json())
-            .then(data => {
-                policeToilets = data.map(item => ({
-                    title: item.title,
-                    lat: parseFloat(item.lat),
-                    lng: parseFloat(item.lng),
-                    note: item.note,
-                    isPoliceOnly: item.isPoliceOnly === true || item.isPoliceOnly === 'TRUE' || item.isPoliceOnly === 'true',
-                    imageUrl: item.imageUrl || ''
-                }));
-                displayMarkers(policeToilets);
-            })
-            .catch(err => {
-                console.error('데이터 로드 실패:', err);
-            });
-    }
-
-    // 사진 크기 리사이징 (구글 드라이브 용량 초과 에러 방지)
-    function compressImage(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const max_size = 1024;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > max_size) {
-                            height *= max_size / width;
-                            width = max_size;
-                        }
-                    } else {
-                        if (height > max_size) {
-                            width *= max_size / height;
-                            height = max_size;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                };
-            };
-        });
-    }
-
-    async function saveNewToilet() {
-        const title = document.getElementById('newTitle').value.trim();
-        const note = document.getElementById('newNote').value.trim();
-        const isPoliceOnly = document.getElementById('newIsPolice').value === 'true';
-        const fileInput = document.getElementById('newImage');
-        const saveBtn = document.getElementById('saveBtn');
-
-        if (!title) {
-            alert('화장실 이름을 입력해주세요.');
-            return;
-        }
-
-        saveBtn.innerText = "업로드 중...";
-        saveBtn.disabled = true;
-
-        let imageBase64 = '';
-        let imageName = '';
-
-        if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            imageName = file.name;
-            imageBase64 = await compressImage(file);
-        }
-
-        const newToilet = {
-            title: title,
-            lat: selectedLatLng.getLat(),
-            lng: selectedLatLng.getLng(),
-            note: note || '등록된 내용 없음',
-            isPoliceOnly: isPoliceOnly,
-            imageBase64: imageBase64,
-            imageName: imageName,
-            imageType: 'image/jpeg'
+        // 1. 지도 초기화
+        window.onload = function() {
+            let container = document.getElementById('map');
+            let options = { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 4 }; // 기본 서울시청
+            map = new kakao.maps.Map(container, options);
+            moveToMyLocation();
+            loadToilets();
         };
 
-        // 3. fetch 코드 수정: mode: 'no-cors' 제거하고 JSON 응답을 받아 에러 파악
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(newToilet)
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.result === 'success') {
-                alert('등록 요청이 전송되었습니다!');
-                closeModal();
-                resetForm();
-                setTimeout(loadToiletsFromGoogleSheet, 3000);
+        // 2. 내 위치로 이동
+        function moveToMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    let lat = position.coords.latitude;
+                    let lon = position.coords.longitude;
+                    let locPosition = new kakao.maps.LatLng(lat, lon);
+                    map.setCenter(locPosition);
+                });
             } else {
-                // 앱스 스크립트에서 보낸 실제 에러 메시지 출력
-                alert('서버 저장 실패: ' + data.message); 
+                alert("GPS를 지원하지 않는 기기입니다.");
             }
-        })
-        .catch(err => {
-            alert('통신 중 오류가 발생했습니다. 다시 시도해주세요.');
-            console.error(err);
-        })
-        .finally(() => {
-            saveBtn.innerText = "저장하기";
-            saveBtn.disabled = false;
-        });
-    }
-
-    function resetForm() {
-        document.getElementById('newTitle').value = '';
-        document.getElementById('newNote').value = '';
-        document.getElementById('newImage').value = '';
-    }
-
-    function toggleAddMode() {
-        isAddMode = !isAddMode;
-        const btn = document.getElementById('addBtn');
-        if (isAddMode) {
-            btn.innerText = "➕ 등록 모드: ON";
-            btn.style.background = "#28a745";
-            alert("지도의 원하는 화장실 위치를 터치/클릭해주세요.");
-        } else {
-            btn.innerText = "➕ 등록 모드: OFF";
-            btn.style.background = "#d9534f";
         }
-    }
 
-    function openModal() { document.getElementById('inputModal').classList.add('active'); }
-    function closeModal() { document.getElementById('inputModal').classList.remove('active'); }
+        // 3. 화장실 데이터 불러오기 및 마커 찍기
+        async function loadToilets() {
+            try {
+                let response = await fetch(SCRIPT_URL);
+                let result = await response.json();
+                if(result.success) {
+                    toiletsData = result.data;
+                    toiletsData.forEach(t => {
+                        let marker = new kakao.maps.Marker({
+                            map: map, position: new kakao.maps.LatLng(t.lat, t.lng)
+                        });
+                        kakao.maps.event.addListener(marker, 'click', function() { showToiletInfo(t); });
+                    });
+                }
+            } catch(e) { console.log("데이터 로드 실패:", e); }
+        }
 
-    function displayMarkers(data) {
-        markers.forEach(m => m.setMap(null));
-        markers = [];
+        // 4. 상세 정보 표시
+        function showToiletInfo(data) {
+            let badgeClass = data.type.includes('경찰') ? 'badge-police' : 'badge-public';
+            let imagesHtml = '';
+            if(data.images && data.images.length > 0) {
+                imagesHtml = `<div class="image-carousel">`;
+                data.images.forEach(img => { imagesHtml += `<img src="${img}" alt="화장실사진">`; });
+                imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">좌우로 스크롤하여 사진 확인</p>`;
+            }
 
-        data.forEach(toilet => {
-            const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
-            const marker = new kakao.maps.Marker({
-                position: markerPosition,
-                map: map
-            });
+            let html = `
+                <span class="close-btn" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
+                <div class="info-title">${data.name}</div>
+                <div class="badge ${badgeClass}">${data.type}</div>
+                <div class="info-row">📍 <b>주소:</b> ${data.address || '정보없음'}</div>
+                <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
+                <div class="info-row">🔑 <b>비밀번호:</b> <span style="color:red; font-weight:bold;">${data.password || '없음(개방)'}</span></div>
+                <div class="info-row">🚽 <b>시설:</b> ${data.bidet} / 대변기 ${data.toiletCnt || 0}개 / 소변기 ${data.urinalCnt || 0}개</div>
+                ${imagesHtml}
+            `;
+            document.getElementById('infoContent').innerHTML = html;
+            document.getElementById('infoModal').style.display = 'block';
+        }
 
-            kakao.maps.event.addListener(marker, 'click', function() {
-                showCard(toilet);
-                map.panTo(markerPosition);
-            });
-
-            markers.push(marker);
-        });
-    }
-
-    function showCard(toilet) {
-        const card = document.getElementById('infoCard');
-        const imgTag = document.getElementById('cardImage');
-
-        document.getElementById('cardTag').className = toilet.isPoliceOnly ? 'card-tag tag-police' : 'card-tag tag-public';
-        document.getElementById('cardTag').innerText = toilet.isPoliceOnly ? '🚨 경찰 협조/거점 화장실' : '♿ 공공/개방 화장실';
-        document.getElementById('cardTitle').innerText = toilet.title;
-        document.getElementById('cardNote').innerText = toilet.note;
-
-        if (toilet.imageUrl) {
-            imgTag.src = toilet.imageUrl;
-            imgTag.style.display = 'block';
+        // 5. 로그인 처리
+        async function login() {
+            let id = document.getElementById('adminId').value;
+            let pw = document.getElementById('adminPw').value;
             
-            // 4. 클릭 시 크게 보기 이벤트 추가
-            imgTag.onclick = function() {
-                openImageViewer(toilet.imageUrl);
-            };
-        } else {
-            imgTag.style.display = 'none';
-            imgTag.onclick = null; // 이미지가 없을 때 이벤트 초기화
+            let btn = document.querySelector('#loginModal .submit-btn');
+            btn.innerText = "로그인 중...";
+
+            try {
+                let response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', id: id, pw: pw })
+                });
+                let result = await response.json();
+                if(result.success) {
+                    alert(`${result.name}님 환영합니다. 이제 지도에서 화장실을 등록할 수 있습니다.`);
+                    loggedInUser = id;
+                    document.getElementById('loginModal').style.display = 'none';
+                    
+                    // 로그인 성공 시 버튼을 '화장실 등록'으로 변경
+                    let adminBtn = document.getElementById('btn-admin');
+                    adminBtn.innerText = "➕ 새 화장실 등록";
+                    adminBtn.style.background = "#d32f2f";
+                    adminBtn.onclick = function() { document.getElementById('registerModal').style.display='block'; };
+                } else {
+                    alert(result.message);
+                }
+            } catch(e) { alert("오류가 발생했습니다."); }
+            btn.innerText = "로그인";
         }
 
-        card.classList.add('active');
-    }
-
-    function closeCard() { document.getElementById('infoCard').classList.remove('active'); }
-
-    function filterToilets() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = policeToilets.filter(t => t.title.toLowerCase().includes(keyword) || t.note.toLowerCase().includes(keyword));
-        displayMarkers(filtered);
-    }
-
-    function moveToCurrentLocation() {
-        if (navigator.geolocation && map) {
-            navigator.geolocation.getCurrentPosition(position => {
-                map.setLevel(3);
-                map.panTo(new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude));
+        // 6. 이미지 Base64 변환 함수
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
             });
         }
-    }
 
-    // 5. 이미지 뷰어 열기/닫기 함수 추가
-    function openImageViewer(imgSrc) {
-        document.getElementById('expandedImage').src = imgSrc;
-        document.getElementById('imageViewerModal').classList.add('active');
-    }
+        // 7. 화장실 등록 (구글시트 & 드라이브로 전송)
+        async function registerToilet() {
+            let name = document.getElementById('regName').value;
+            if(!name) return alert("화장실 이름을 입력해주세요.");
 
-    function closeImageViewer() {
-        document.getElementById('imageViewerModal').classList.remove('active');
-    }
-</script>
+            let btn = document.querySelector('#registerModal .submit-btn');
+            btn.innerText = "업로드 중... (사진이 많으면 오래 걸립니다)";
+            btn.disabled = true;
+
+            // 현재 지도의 중심 좌표를 가져옴
+            let center = map.getCenter();
+            
+            // 사진 처리 (최대 4장)
+            let files = document.getElementById('regImages').files;
+            let base64Images = [];
+            for(let i=0; i<Math.min(files.length, 4); i++) {
+                let b64 = await toBase64(files[i]);
+                base64Images.push(b64);
+            }
+
+            let payload = {
+                action: 'register',
+                userId: loggedInUser,
+                name: name,
+                address: document.getElementById('regAddress').value,
+                lat: center.getLat(),
+                lng: center.getLng(),
+                type: document.getElementById('regType').value,
+                password: document.getElementById('regPassword').value,
+                hours: document.getElementById('regHours').value,
+                bidet: document.getElementById('regBidet').value,
+                toiletCnt: document.getElementById('regToilet').value,
+                urinalCnt: document.getElementById('regUrinal').value,
+                images: base64Images
+            };
+
+            try {
+                let response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                let result = await response.json();
+                if(result.success) {
+                    alert("성공적으로 등록되었습니다!");
+                    document.getElementById('registerModal').style.display = 'none';
+                    window.location.reload(); // 등록 후 새로고침하여 마커 반영
+                }
+            } catch(e) { alert("등록 실패. 다시 시도해주세요."); }
+            
+            btn.innerText = "등록하기";
+            btn.disabled = false;
+        }
+    </script>
 </body>
 </html>
