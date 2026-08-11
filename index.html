@@ -8,16 +8,21 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100vh; }
         
-        /* 플로팅 버튼 (내 위치, 관리자 로그인) */
+        /* 플로팅 버튼 (내 위치, 관리자 로그인, 로그아웃) */
         .btn-floating { position: fixed; z-index: 10; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; }
         #btn-myloc { bottom: 20px; right: 20px; }
         #btn-admin { top: 20px; right: 20px; background: #003478; color: white; }
+        #btn-logout { top: 70px; right: 20px; background: #555; color: white; display: none; }
 
         /* 모달 공통 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
         .modal-content { background: white; width: 90%; max-width: 400px; margin: 10% auto; padding: 20px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
         .close-btn { float: right; cursor: pointer; font-size: 20px; }
         
+        /* 사진 확대용 팝업 모달 */
+        #imageZoomModal { z-index: 9999; background: rgba(0,0,0,0.8); cursor: pointer; }
+        #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
+
         /* 폼 스타일 */
         input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
@@ -31,7 +36,7 @@
         
         /* 이미지 스크롤 (Carousel) */
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
-        .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; }
+        .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; }
     </style>
     <!-- 카카오맵 API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
@@ -40,6 +45,7 @@
 
     <div id="map"></div>
     <button id="btn-admin" class="btn-floating" onclick="document.getElementById('loginModal').style.display='block'">관리자 접속</button>
+    <button id="btn-logout" class="btn-floating" onclick="logout()">로그아웃</button>
     <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
 
     <!-- 1. 로그인 모달 -->
@@ -58,7 +64,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
             <h2 style="color:#003478; margin-top:0;">신규 화장실 등록</h2>
-            <p style="font-size: 12px; color: #d32f2f; font-weight: bold;">※ 직접 이동하신 핀의 위치로 등록됩니다.</p>
+            <p style="font-size: 12px; color: #d32f2f; font-weight: bold;">※ 클릭하신 위치로 화장실이 등록됩니다.</p>
             <input type="text" id="regName" placeholder="화장실 이름 (예: OO빌딩 1층)" required>
             <input type="text" id="regAddress" placeholder="대략적인 주소">
             <select id="regType">
@@ -76,7 +82,8 @@
                 <input type="number" id="regToilet" placeholder="대변기 수">
                 <input type="number" id="regUrinal" placeholder="소변기 수">
             </div>
-            <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 (최대 4장 / PNG 자동압축)</label>
+            <!-- 첨부 제한을 2장으로 변경 안내 -->
+            <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 (최대 2장 / 자동 압축)</label>
             <input type="file" id="regImages" accept="image/*" multiple>
             
             <button class="submit-btn" style="margin-top:20px;" onclick="registerToilet()">등록하기</button>
@@ -89,6 +96,11 @@
         </div>
     </div>
 
+    <!-- 4. 사진 확대 모달 -->
+    <div id="imageZoomModal" class="modal" onclick="closeZoom()" style="display: none; align-items: center; justify-content: center;">
+        <img id="zoomImage" src="" alt="확대된 사진">
+    </div>
+
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNPX2j6hYMgtVuPoy1hHryMuslLbvDOyWowhaQVdY1ljzAIstBQe4QoyhM7XaU-Qfkfg/exec'; 
         
@@ -96,17 +108,36 @@
         let loggedInUser = null;
         let toiletsData = [];
         let registerMarker = null; 
+        let isRegisterMode = false; // 위치 클릭 등록 모드 상태 변수
 
-        // 1. 지도 초기화
+        // 1. 지도 초기화 및 로그인 상태 체크
         window.onload = function() {
             let container = document.getElementById('map');
             let options = { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 4 }; 
             map = new kakao.maps.Map(container, options);
+            
+            // 등록 모드일 때 지도 클릭 시 핀 꽂기 이벤트
+            kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+                if (isRegisterMode) {
+                    let loc = mouseEvent.latLng;
+                    if (!registerMarker) {
+                        registerMarker = new kakao.maps.Marker({ map: map, position: loc });
+                    } else {
+                        registerMarker.setPosition(loc);
+                        registerMarker.setMap(map);
+                    }
+                    // 핀을 꽂으면 모드 종료하고 등록 창 띄우기
+                    isRegisterMode = false;
+                    document.getElementById('registerModal').style.display = 'block';
+                }
+            });
+
             moveToMyLocation();
             loadToilets();
+            checkLoginStatus(); // 세션 스토리지에서 로그인 유지 확인
         };
 
-        // 2. 내 위치로 이동
+        // 내 위치로 이동
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -120,7 +151,7 @@
             }
         }
 
-        // 3. 화장실 데이터 불러오기
+        // 화장실 데이터 불러오기
         async function loadToilets() {
             try {
                 let response = await fetch(SCRIPT_URL, { redirect: 'follow' });
@@ -137,7 +168,7 @@
             } catch(e) { console.log("데이터 로드 실패:", e); }
         }
 
-        // 4. 상세 정보 표시 (아이폰 이미지 에러 우회 로직 추가)
+        // 상세 정보 표시 (사진 클릭 시 확대 기능 추가)
         function showToiletInfo(data) {
             let badgeClass = data.type.includes('경찰') ? 'badge-police' : 'badge-public';
             let imagesHtml = '';
@@ -145,16 +176,16 @@
             if(data.images && data.images.length > 0) {
                 imagesHtml = `<div class="image-carousel">`;
                 data.images.forEach(img => { 
-                    // ★ 아이폰 사파리 보안정책 우회 로직: 구글 드라이브 ID만 추출해서 호환성 100% 링크로 변환
                     let finalSrc = img;
                     let match = img.match(/id=([a-zA-Z0-9_-]+)/);
                     if (match && match[1]) {
                         finalSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
                     }
                     
-                    imagesHtml += `<img src="${finalSrc}" alt="화장실사진" onerror="this.src='https://via.placeholder.com/150?text=Image+Error';">`; 
+                    // onclick 이벤트로 사진 확대 함수(openZoom) 연결
+                    imagesHtml += `<img src="${finalSrc}" alt="화장실사진" onclick="openZoom(this.src)" onerror="this.src='https://via.placeholder.com/150?text=Image+Error';">`; 
                 });
-                imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">좌우로 스크롤하여 사진 확인</p>`;
+                imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">좌우로 스크롤 가능 / 사진 터치 시 확대</p>`;
             }
 
             let html = `
@@ -171,7 +202,46 @@
             document.getElementById('infoModal').style.display = 'block';
         }
 
-        // 5. 로그인 처리 및 등록 마커 생성 기능 부여
+        // 사진 확대 팝업 제어 함수
+        function openZoom(src) {
+            document.getElementById('zoomImage').src = src;
+            document.getElementById('imageZoomModal').style.display = 'flex'; // flex로 설정하여 중앙 정렬
+        }
+        
+        function closeZoom() {
+            document.getElementById('imageZoomModal').style.display = 'none';
+        }
+
+        // 로그인 유지 및 세팅 처리 함수
+        function setLoggedInUI(id) {
+            loggedInUser = id;
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('btn-logout').style.display = 'block';
+            
+            let adminBtn = document.getElementById('btn-admin');
+            adminBtn.innerText = "➕ 새 화장실 등록";
+            adminBtn.style.background = "#d32f2f";
+            
+            // 등록 버튼 누르면 지도 클릭 모드로 전환
+            adminBtn.onclick = function() { 
+                isRegisterMode = true;
+                if(registerMarker) registerMarker.setMap(null); // 기존 임시 핀 숨기기
+                alert("📍 지도 위에서 화장실이 위치한 곳을 '터치(클릭)' 하세요.");
+            };
+        }
+
+        function checkLoginStatus() {
+            let savedId = sessionStorage.getItem('adminId');
+            if(savedId) setLoggedInUI(savedId);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminId');
+            alert("로그아웃 되었습니다.");
+            window.location.reload();
+        }
+
+        // 로그인 서버 통신
         async function login() {
             let id = document.getElementById('adminId').value;
             let pw = document.getElementById('adminPw').value;
@@ -189,43 +259,20 @@
                 
                 let result = await response.json();
                 if(result.success) {
-                    alert(`${result.name}님 환영합니다. [새 화장실 등록] 버튼을 누르면 지도에 핀을 꽂을 수 있습니다.`);
-                    loggedInUser = id;
-                    document.getElementById('loginModal').style.display = 'none';
-                    
-                    let adminBtn = document.getElementById('btn-admin');
-                    adminBtn.innerText = "➕ 새 화장실 등록";
-                    adminBtn.style.background = "#d32f2f";
-                    
-                    adminBtn.onclick = function() { 
-                        if(registerMarker) {
-                            registerMarker.setMap(null); 
-                        }
-
-                        alert("📍 지도 중앙에 위치 지정용 핀이 생성되었습니다.\n원하는 위치로 핀을 드래그한 후, 핀을 클릭하면 등록 창이 열립니다.");
-
-                        let center = map.getCenter();
-                        registerMarker = new kakao.maps.Marker({
-                            map: map,
-                            position: center,
-                            draggable: true 
-                        });
-
-                        kakao.maps.event.addListener(registerMarker, 'click', function() {
-                            document.getElementById('registerModal').style.display = 'block';
-                        });
-                    };
+                    alert(`${result.name}님 환영합니다.`);
+                    sessionStorage.setItem('adminId', id); // 세션 스토리지에 아이디 저장 (로그인 유지)
+                    setLoggedInUI(id);
                 } else {
                     alert(result.message);
                 }
             } catch(e) { 
                 console.error(e);
-                alert("통신 오류가 발생했습니다. 구글 앱스 스크립트 설정을 확인해주세요."); 
+                alert("통신 오류가 발생했습니다."); 
             }
             btn.innerText = "로그인";
         }
 
-        // 6. 이미지 압축 및 JPEG 자동 변환 함수 
+        // 이미지 압축 및 JPEG 변환 함수
         function compressImage(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -234,8 +281,8 @@
                     const img = new Image();
                     img.src = event.target.result;
                     img.onload = function() {
-                        const MAX_WIDTH = 800; // 최대 가로 픽셀
-                        const MAX_HEIGHT = 800; // 최대 세로 픽셀
+                        const MAX_WIDTH = 800; 
+                        const MAX_HEIGHT = 800; 
                         let width = img.width;
                         let height = img.height;
 
@@ -269,7 +316,7 @@
             });
         }
 
-        // 7. 화장실 등록
+        // 화장실 서버 등록
         async function registerToilet() {
             let name = document.getElementById('regName').value;
             if(!name) return alert("화장실 이름을 입력해주세요.");
@@ -278,11 +325,14 @@
             btn.innerText = "업로드 중... (압축 적용됨)";
             btn.disabled = true;
 
+            // 클릭으로 생성한 마커의 위치를 가져옴
             let position = registerMarker.getPosition();
             
             let files = document.getElementById('regImages').files;
             let base64Images = [];
-            for(let i=0; i<Math.min(files.length, 4); i++) {
+            
+            // 최대 2장까지만 처리하도록 제한 (Math.min(files.length, 2))
+            for(let i=0; i<Math.min(files.length, 2); i++) {
                 let b64 = await compressImage(files[i]);
                 base64Images.push(b64);
             }
