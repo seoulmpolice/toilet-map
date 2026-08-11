@@ -91,8 +91,8 @@
     </div>
 
     <script>
-        // 발급받으신 웹 앱 URL 적용
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwyhqTserl-7CN5LIp3qWXFeEafawVmXuqwjJg61dmCwE3KK2di31vUvxf3sEv-mNDssQ/exec'; 
+        // 새로 발급받으신 웹 앱 URL 적용 완료
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7crD_gS0_Ti3BBwAhn3nC7Azf5-XKFEYNaBldTPbEyGI2FWMVlEDLlrJ6JdK8sej3LQ/exec'; 
         
         let map;
         let loggedInUser = null;
@@ -134,6 +134,8 @@
                         });
                         kakao.maps.event.addListener(marker, 'click', function() { showToiletInfo(t); });
                     });
+                } else if(result.message) {
+                    console.error("서버 에러 메시지:", result.message);
                 }
             } catch(e) { console.log("데이터 로드 실패:", e); }
         }
@@ -189,6 +191,7 @@
                     adminBtn.style.background = "#d32f2f";
                     adminBtn.onclick = function() { document.getElementById('registerModal').style.display='block'; };
                 } else {
+                    // 구글 앱스 스크립트에서 보내준 에러 메시지를 띄움
                     alert(result.message);
                 }
             } catch(e) { 
@@ -253,6 +256,8 @@
                     alert("성공적으로 등록되었습니다!");
                     document.getElementById('registerModal').style.display = 'none';
                     window.location.reload(); 
+                } else {
+                    alert("오류: " + result.message);
                 }
             } catch(e) { 
                 console.error(e);
