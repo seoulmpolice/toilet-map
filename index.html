@@ -92,7 +92,7 @@
 
     <script>
         // 새로 발급받으신 웹 앱 URL 적용 완료
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7crD_gS0_Ti3BBwAhn3nC7Azf5-XKFEYNaBldTPbEyGI2FWMVlEDLlrJ6JdK8sej3LQ/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzpuq5yZ9-ddVjC8YRsZLPbf2C2wNPK04jnSmLgx4wzl-qjMSnTGlUJokDDqt3SVBd7cQ/exec'; 
         
         let map;
         let loggedInUser = null;
@@ -191,7 +191,6 @@
                     adminBtn.style.background = "#d32f2f";
                     adminBtn.onclick = function() { document.getElementById('registerModal').style.display='block'; };
                 } else {
-                    // 구글 앱스 스크립트에서 보내준 에러 메시지를 띄움
                     alert(result.message);
                 }
             } catch(e) { 
