@@ -1,419 +1,298 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>서울경찰 기동대 화장실 지도</title>
-    <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; }
-        #map { width: 100%; height: 100vh; }
-        
-        /* 플로팅 버튼 (내 위치, 관리자 로그인, 로그아웃) */
-        .btn-floating { position: fixed; z-index: 10; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; }
-        #btn-myloc { bottom: 20px; right: 20px; }
-        #btn-admin { top: 20px; right: 20px; background: #003478; color: white; }
-        #btn-logout { top: 70px; right: 20px; background: #555; color: white; display: none; }
-
-        /* 모달 공통 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
-        .modal-content { background: white; width: 90%; max-width: 400px; margin: 10% auto; padding: 20px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
-        .close-btn { float: right; cursor: pointer; font-size: 20px; }
-        
-        /* 사진 확대용 팝업 모달 */
-        #imageZoomModal { z-index: 9999; background: rgba(0,0,0,0.8); cursor: pointer; }
-        #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
-
-        /* 폼 스타일 */
-        input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-
-        /* 화장실 상세 정보 모달 */
-        .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 10px; }
-        .info-row { margin-bottom: 5px; font-size: 14px; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; margin-bottom: 10px;}
-        .badge-police { background: #d32f2f; }
-        .badge-public { background: #1976d2; }
-        
-        /* 이미지 스크롤 (Carousel) */
-        .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
-        .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; }
-    </style>
-    <!-- 카카오맵 API -->
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pol-Toilet: 기동대 안심 화장실 지도</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+    
+    /* 모달 UI 스타일 */
+    .modal { 
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+      background: white; padding: 20px; z-index: 1000; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+      width: 320px; max-height: 80vh; overflow-y: auto;
+    }
+    .overlay { 
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.5); z-index: 999; 
+    }
+    .modal h4 { margin-top: 0; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .modal .close-btn { cursor: pointer; font-size: 20px; font-weight: bold; color: #999; }
+    
+    .modal label { font-size: 0.85em; font-weight: bold; color: #333; margin-top: 10px; display: block; }
+    .modal input[type="text"], .modal input[type="password"], .modal input[type="number"], .modal select { 
+      width: 100%; margin-top: 5px; margin-bottom: 10px; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;
+    }
+    .btn-group { text-align: right; margin-top: 15px; }
+    .btn-group button { padding: 8px 16px; margin-left: 5px; cursor: pointer; background-color: #00467F; color: white; border: none; border-radius: 4px; }
+    .btn-group button:disabled { background-color: #aaa; cursor: not-allowed; }
+    .info-text { font-size: 0.85em; color: #d9534f; margin-bottom: 10px; font-weight: bold; }
+  </style>
 </head>
 <body>
 
-    <div id="map"></div>
-    <button id="btn-admin" class="btn-floating" onclick="document.getElementById('loginModal').style.display='block'">관리자 접속</button>
-    <button id="btn-logout" class="btn-floating" onclick="logout()">로그아웃</button>
-    <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
+  <!-- 카카오 맵 컨테이너 -->
+  <div id="map"></div>
+  
+  <div class="overlay" id="overlay"></div>
+  
+  <!-- 관리자 로그인 UI -->
+  <div class="modal" id="loginModal">
+    <h4>관리자 로그인 <span class="close-btn" onclick="closeModal('loginModal')">&times;</span></h4>
+    <input type="text" id="adminId" placeholder="아이디">
+    <input type="password" id="adminPw" placeholder="비밀번호">
+    <div class="btn-group">
+      <button id="loginBtn" onclick="processLogin()">로그인</button>
+    </div>
+  </div>
 
-    <!-- 1. 로그인 모달 -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="document.getElementById('loginModal').style.display='none'">&times;</span>
-            <h2 style="color:#003478; margin-top:0;">관리자 로그인</h2>
-            <input type="text" id="adminId" placeholder="아이디">
-            <input type="password" id="adminPw" placeholder="비밀번호">
-            <button class="submit-btn" onclick="login()">로그인</button>
-        </div>
+  <!-- 신규 화장실 등록 UI -->
+  <div class="modal" id="registerModal">
+    <h4>신규 화장실 등록 <span class="close-btn" onclick="closeModal('registerModal')">&times;</span></h4>
+    <p class="info-text">※ 클릭하신 위치로 화장실이 등록됩니다.</p>
+    
+    <label>화장실 이름</label>
+    <input type="text" id="tName" placeholder="예: 광화문역 1번출구 공중화장실">
+    
+    <label>상세 주소</label>
+    <input type="text" id="tAddress" placeholder="주소 입력">
+    
+    <label>화장실 성격 구분</label>
+    <select id="tType">
+        <option value="경찰 전용/협조">경찰 전용/협조 화장실</option>
+        <option value="일반 공공개방">일반 공공개방 화장실</option>
+    </select>
+    
+    <label>출입 비밀번호 (개방형이면 빈칸)</label>
+    <input type="text" id="tPassword" placeholder="비밀번호">
+    
+    <label>운영 시간</label>
+    <input type="text" id="tHours" placeholder="예: 24시간, 09:00~18:00">
+    
+    <label>비데 설치 여부</label>
+    <select id="tBidet">
+        <option value="알수없음">알 수 없음</option>
+        <option value="O">있음 (O)</option>
+        <option value="X">없음 (X)</option>
+    </select>
+    
+    <label>대/소변기 갯수</label>
+    <div style="display: flex; gap: 10px;">
+        <input type="number" id="tToiletCnt" placeholder="대변기 수" min="0">
+        <input type="number" id="tUrinalCnt" placeholder="소변기 수" min="0">
     </div>
 
-    <!-- 2. 화장실 등록 모달 -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
-            <h2 style="color:#003478; margin-top:0;">신규 화장실 등록</h2>
-            <p style="font-size: 12px; color: #d32f2f; font-weight: bold;">※ 클릭하신 위치로 화장실이 등록됩니다.</p>
-            <input type="text" id="regName" placeholder="화장실 이름 (예: OO빌딩 1층)" required>
-            
-            <!-- ★ 주소 입력칸 및 주소 가져오기 버튼 (UI 오류 수정) -->
-            <div style="display:flex; gap:5px; align-items:center; margin: 8px 0;">
-                <input type="text" id="regAddress" placeholder="대략적인 주소" style="flex:1; margin:0;">
-                <button type="button" onclick="fetchAddressFromMarker()" style="width:auto; padding:10px; background:#555; color:white; border:none; border-radius:5px; cursor:pointer; font-size:13px; white-space:nowrap; margin:0;">주소 가져오기</button>
-            </div>
-
-            <select id="regType">
-                <option value="경찰전용/협조">경찰전용/협조 화장실</option>
-                <option value="공공개방">일반 공공개방 화장실</option>
-            </select>
-            <input type="text" id="regPassword" placeholder="비밀번호 (없으면 공란)">
-            <input type="text" id="regHours" placeholder="운영시간 (예: 24시간, 09:00~18:00)">
-            <select id="regBidet">
-                <option value="비데 모름/없음">비데 유무 선택</option>
-                <option value="비데 있음">비데 있음</option>
-                <option value="비데 없음">비데 없음</option>
-            </select>
-            <div style="display:flex; gap:10px;">
-                <input type="number" id="regToilet" placeholder="대변기 수">
-                <input type="number" id="regUrinal" placeholder="소변기 수">
-            </div>
-            
-            <!-- ★ 첨부파일 버튼 2개로 분리 -->
-            <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 1 (자동 압축)</label>
-            <input type="file" id="regImage1" accept="image/*">
-            
-            <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 2 (자동 압축)</label>
-            <input type="file" id="regImage2" accept="image/*">
-            
-            <button class="submit-btn" style="margin-top:20px;" onclick="registerToilet()">등록하기</button>
-        </div>
+    <label>현장 사진 첨부 (최대 2장)</label>
+    <input type="file" id="tImage1" accept="image/*" style="margin-bottom: 5px;">
+    <input type="file" id="tImage2" accept="image/*">
+    
+    <div class="btn-group">
+      <button onclick="submitToilet()" id="submitBtn">등록하기</button>
     </div>
+  </div>
 
-    <!-- 3. 상세정보 모달 -->
-    <div id="infoModal" class="modal">
-        <div class="modal-content" id="infoContent">
-        </div>
-    </div>
+  <!-- 카카오 지도 API (App Key를 반드시 본인 것으로 변경하세요) -->
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=본인의_카카오_앱_키_입력"></script>
+  
+  <script>
+    // 배포해주신 최신 GAS 웹앱 URL
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzDTe5IrmjMdD0IoURXiI2wMwsiPJhTlE_ppdUyqnK1kUDKQP8zHY6E2uGdtE3rN9HJXA/exec";
+    
+    // 1. 지도 초기화
+    const mapContainer = document.getElementById('map'); 
+    const mapOption = { 
+        center: new kakao.maps.LatLng(37.566826, 126.9786567), // 서울시청 기본 좌표
+        level: 4 
+    };
+    const map = new kakao.maps.Map(mapContainer, mapOption);
+    
+    let isAdmin = false; 
+    let loggedInUserId = ""; // 등록 시 시트에 기록할 로그인 아이디
+    let selectedLatLng = null; 
 
-    <!-- 4. 사진 확대 모달 -->
-    <div id="imageZoomModal" class="modal" onclick="closeZoom()" style="display: none; align-items: center; justify-content: center;">
-        <img id="zoomImage" src="" alt="확대된 사진">
-    </div>
+    // 2. 정적 JSON 파일 데이터 로드 (GitHub Actions 배포 방식)
+    function loadToiletData() {
+      fetch('./data/toilets.json') 
+        .then(response => {
+          if (!response.ok) throw new Error("JSON 데이터를 불러오는 중입니다. (Actions 배포 대기 중이거나 경로 오류)");
+          return response.json();
+        })
+        .then(data => {
+          // Apps Script의 doGet에서 응답하는 { success: true, data: [...] } 구조 처리
+          if(data && data.success && data.data) {
+            data.data.forEach(toilet => {
+              const markerPosition = new kakao.maps.LatLng(toilet.lat, toilet.lng);
+              const marker = new kakao.maps.Marker({ position: markerPosition });
+              marker.setMap(map);
+              
+              // 마커 클릭 시 임시 알림 (추후 인포윈도우 디자인 가능)
+              kakao.maps.event.addListener(marker, 'click', function() {
+                alert(`[${toilet.type}] ${toilet.name}\n주소: ${toilet.address || '정보 없음'}`);
+              });
+            });
+          }
+        })
+        .catch(error => console.warn(error.message));
+    }
 
-    <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzNPX2j6hYMgtVuPoy1hHryMuslLbvDOyWowhaQVdY1ljzAIstBQe4QoyhM7XaU-Qfkfg/exec'; 
+    // 3. 지도 클릭 이벤트 (신규 등록)
+    kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+      if (!isAdmin) {
+        openModal('loginModal'); 
+        return;
+      }
+      selectedLatLng = mouseEvent.latLng;
+      openModal('registerModal');
+    });
+
+    // 4. 모달 제어 함수
+    function openModal(id) {
+      document.getElementById('overlay').style.display = 'block';
+      document.getElementById(id).style.display = 'block';
+    }
+    function closeModal(id) {
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById(id).style.display = 'none';
+    }
+
+    // 5. 서버 연동 관리자 로그인 처리
+    function processLogin() {
+      const id = document.getElementById('adminId').value;
+      const pw = document.getElementById('adminPw').value;
+      
+      if(!id || !pw) { alert("아이디와 비밀번호를 입력해주세요."); return; }
+      
+      const loginBtn = document.getElementById('loginBtn');
+      loginBtn.innerText = "로그인 중...";
+      loginBtn.disabled = true;
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'login', id: id, pw: pw })
+      })
+      .then(res => res.json())
+      .then(data => {
+        loginBtn.innerText = "로그인";
+        loginBtn.disabled = false;
         
-        let map;
-        let loggedInUser = null;
-        let toiletsData = [];
-        let registerMarker = null; 
-        let isRegisterMode = false;
-        let geocoder; 
+        if(data.success) {
+          isAdmin = true;
+          loggedInUserId = id;
+          alert(`${data.name} 관리자님 환영합니다.\n지도 빈 공간을 클릭하여 화장실을 등록하세요.`);
+          closeModal('loginModal');
+        } else {
+          alert(data.message);
+        }
+      })
+      .catch(err => {
+        loginBtn.innerText = "로그인";
+        loginBtn.disabled = false;
+        alert("로그인 통신 실패. 네트워크 상태를 확인해주세요.");
+      });
+    }
 
-        // 1. 지도 초기화 및 로그인 상태 체크
-        window.onload = function() {
-            let container = document.getElementById('map');
-            let options = { center: new kakao.maps.LatLng(37.566826, 126.9786567), level: 4 }; 
-            map = new kakao.maps.Map(container, options);
+    // 6. 비동기 이미지 압축(리사이즈) 함수 (Promise 적용)
+    function compressImage(file) {
+      return new Promise((resolve) => {
+        if (!file) { resolve(""); return; }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800; // 가로 800px 최적화
             
-            geocoder = new kakao.maps.services.Geocoder();
-
-            // 등록 모드일 때 지도 클릭 시 핀 꽂기 이벤트
-            kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
-                if (isRegisterMode) {
-                    let loc = mouseEvent.latLng;
-                    if (!registerMarker) {
-                        registerMarker = new kakao.maps.Marker({ map: map, position: loc, draggable: true });
-                    } else {
-                        registerMarker.setPosition(loc);
-                        registerMarker.setMap(map);
-                    }
-                    
-                    // 주소 초기화
-                    document.getElementById('regAddress').value = '';
-                    
-                    // 모드를 종료하고 등록 창 띄우기
-                    isRegisterMode = false;
-                    document.getElementById('registerModal').style.display = 'block';
-                }
-            });
-
-            moveToMyLocation();
-            loadToilets();
-            checkLoginStatus(); 
-        };
-
-        // 내 위치로 이동
-        function moveToMyLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    let lat = position.coords.latitude;
-                    let lon = position.coords.longitude;
-                    let locPosition = new kakao.maps.LatLng(lat, lon);
-                    map.setCenter(locPosition);
-                });
-            } else {
-                alert("GPS를 지원하지 않는 기기입니다.");
-            }
-        }
-
-        // 화장실 데이터 불러오기
-        async function loadToilets() {
-            try {
-                let response = await fetch(SCRIPT_URL, { redirect: 'follow' });
-                let result = await response.json();
-                if(result.success) {
-                    toiletsData = result.data;
-                    toiletsData.forEach(t => {
-                        let marker = new kakao.maps.Marker({
-                            map: map, position: new kakao.maps.LatLng(t.lat, t.lng)
-                        });
-                        kakao.maps.event.addListener(marker, 'click', function() { showToiletInfo(t); });
-                    });
-                }
-            } catch(e) { console.log("데이터 로드 실패:", e); }
-        }
-
-        // 상세 정보 표시
-        function showToiletInfo(data) {
-            let badgeClass = data.type.includes('경찰') ? 'badge-police' : 'badge-public';
-            let imagesHtml = '';
+            let width = img.width;
+            let height = img.height;
             
-            if(data.images && data.images.length > 0) {
-                imagesHtml = `<div class="image-carousel">`;
-                data.images.forEach(img => { 
-                    let finalSrc = img;
-                    let match = img.match(/id=([a-zA-Z0-9_-]+)/);
-                    if (match && match[1]) {
-                        finalSrc = `https://lh3.googleusercontent.com/d/${match[1]}`;
-                    }
-                    
-                    imagesHtml += `<img src="${finalSrc}" alt="화장실사진" onclick="openZoom(this.src)" onerror="this.src='https://via.placeholder.com/150?text=Image+Error';">`; 
-                });
-                imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">좌우로 스크롤 가능 / 사진 터치 시 확대</p>`;
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
             }
-
-            let html = `
-                <span class="close-btn" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
-                <div class="info-title">${data.name}</div>
-                <div class="badge ${badgeClass}">${data.type}</div>
-                <div class="info-row">📍 <b>주소:</b> ${data.address || '정보없음'}</div>
-                <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
-                <div class="info-row">🔑 <b>비밀번호:</b> <span style="color:red; font-weight:bold;">${data.password || '없음(개방)'}</span></div>
-                <div class="info-row">🚽 <b>시설:</b> ${data.bidet} / 대변기 ${data.toiletCnt || 0}개 / 소변기 ${data.urinalCnt || 0}개</div>
-                ${imagesHtml}
-            `;
-            document.getElementById('infoContent').innerHTML = html;
-            document.getElementById('infoModal').style.display = 'block';
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            resolve(canvas.toDataURL('image/jpeg', 0.7)); // 70% 화질의 base64 반환
+          }
+          img.src = e.target.result;
         }
+        reader.readAsDataURL(file);
+      });
+    }
 
-        // 사진 확대 팝업 제어
-        function openZoom(src) {
-            document.getElementById('zoomImage').src = src;
-            document.getElementById('imageZoomModal').style.display = 'flex'; 
-        }
+    // 7. 신규 화장실 데이터 서버로 전송
+    async function submitToilet() {
+      const name = document.getElementById('tName').value;
+      
+      if(!name) { alert("화장실 이름을 입력하세요."); return; }
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.innerText = "이미지 압축 및 등록 중...";
+      submitBtn.disabled = true;
+
+      // 두 이미지를 순차적으로 압축
+      const base64_1 = await compressImage(document.getElementById('tImage1').files[0]);
+      const base64_2 = await compressImage(document.getElementById('tImage2').files[0]);
+      
+      // 압축된 이미지만 배열에 담기
+      const imagesArray = [];
+      if(base64_1) imagesArray.push(base64_1);
+      if(base64_2) imagesArray.push(base64_2);
+
+      // Apps Script의 action: 'register' 구조에 맞춘 페이로드
+      const payload = {
+        action: 'register',
+        userId: loggedInUserId,
+        name: name,
+        address: document.getElementById('tAddress').value,
+        lat: selectedLatLng.getLat(),
+        lng: selectedLatLng.getLng(),
+        type: document.getElementById('tType').value,
+        password: document.getElementById('tPassword').value,
+        hours: document.getElementById('tHours').value,
+        bidet: document.getElementById('tBidet').value,
+        toiletCnt: document.getElementById('tToiletCnt').value,
+        urinalCnt: document.getElementById('tUrinalCnt').value,
+        images: imagesArray
+      };
+
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(data => {
+        submitBtn.innerText = "등록하기";
+        submitBtn.disabled = false;
         
-        function closeZoom() {
-            document.getElementById('imageZoomModal').style.display = 'none';
+        if(data.success) {
+          alert("성공적으로 등록되었습니다.\nGitHub Actions 동기화 후 정적 지도에 반영됩니다.");
+          closeModal('registerModal');
+          
+          // 입력창 초기화 (선택사항)
+          document.querySelectorAll('#registerModal input').forEach(input => {
+            if(input.type === 'text' || input.type === 'number') input.value = '';
+            if(input.type === 'file') input.value = '';
+          });
+        } else {
+          alert("오류 발생: " + data.message);
         }
+      })
+      .catch(err => {
+        submitBtn.innerText = "등록하기";
+        submitBtn.disabled = false;
+        alert("전송 실패: 서버 통신을 확인해주세요.");
+      });
+    }
 
-        // 주소 가져오기 버튼 동작
-        function fetchAddressFromMarker() {
-            if (!registerMarker) {
-                alert("지정된 핀이 없습니다.");
-                return;
-            }
-            let loc = registerMarker.getPosition();
-            
-            geocoder.coord2Address(loc.getLng(), loc.getLat(), function(result, status) {
-                if (status === kakao.maps.services.Status.OK) {
-                    let detailAddr = !!result[0].road_address ? result[0].road_address.address_name : result[0].address.address_name;
-                    document.getElementById('regAddress').value = detailAddr;
-                } else {
-                    alert("해당 위치의 주소를 찾을 수 없습니다. 직접 입력해주세요.");
-                    document.getElementById('regAddress').value = '';
-                }
-            });
-        }
-
-        // 로그인 유지 및 세팅 처리
-        function setLoggedInUI(id) {
-            loggedInUser = id;
-            document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('btn-logout').style.display = 'block';
-            
-            let adminBtn = document.getElementById('btn-admin');
-            adminBtn.innerText = "➕ 새 화장실 등록";
-            adminBtn.style.background = "#d32f2f";
-            
-            adminBtn.onclick = function() { 
-                isRegisterMode = true;
-                if(registerMarker) registerMarker.setMap(null); 
-                alert("📍 지도 위에서 화장실이 위치한 곳을 '터치(클릭)' 하세요.");
-            };
-        }
-
-        function checkLoginStatus() {
-            let savedId = sessionStorage.getItem('adminId');
-            if(savedId) setLoggedInUI(savedId);
-        }
-
-        function logout() {
-            sessionStorage.removeItem('adminId');
-            alert("로그아웃 되었습니다.");
-            window.location.reload();
-        }
-
-        // 로그인 서버 통신
-        async function login() {
-            let id = document.getElementById('adminId').value;
-            let pw = document.getElementById('adminPw').value;
-            
-            let btn = document.querySelector('#loginModal .submit-btn');
-            btn.innerText = "로그인 중...";
-
-            try {
-                let response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'login', id: id, pw: pw }),
-                    redirect: 'follow'
-                });
-                
-                let result = await response.json();
-                if(result.success) {
-                    alert(`${result.name}님 환영합니다.`);
-                    sessionStorage.setItem('adminId', id); 
-                    setLoggedInUI(id);
-                } else {
-                    alert(result.message);
-                }
-            } catch(e) { 
-                console.error(e);
-                alert("통신 오류가 발생했습니다."); 
-            }
-            btn.innerText = "로그인";
-        }
-
-        // 이미지 압축 및 JPEG 변환
-        function compressImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = function() {
-                        const MAX_WIDTH = 800; 
-                        const MAX_HEIGHT = 800; 
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height = Math.round(height * (MAX_WIDTH / width));
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width = Math.round(width * (MAX_HEIGHT / height));
-                                height = MAX_HEIGHT;
-                            }
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.fillStyle = "#ffffff";
-                        ctx.fillRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        resolve(dataUrl);
-                    };
-                    img.onerror = error => reject(error);
-                };
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // 화장실 등록
-        async function registerToilet() {
-            let name = document.getElementById('regName').value;
-            if(!name) return alert("화장실 이름을 입력해주세요.");
-
-            let btn = document.querySelector('#registerModal .submit-btn');
-            btn.innerText = "업로드 중... (압축 적용됨)";
-            btn.disabled = true;
-
-            let position = registerMarker.getPosition();
-            
-            // ★ 수정: 분리된 2개의 파일 입력창에서 각각 사진을 가져옵니다.
-            let files = [];
-            let file1 = document.getElementById('regImage1').files[0];
-            let file2 = document.getElementById('regImage2').files[0];
-            
-            if (file1) files.push(file1);
-            if (file2) files.push(file2);
-            
-            let base64Images = [];
-            for(let i=0; i<files.length; i++) {
-                let b64 = await compressImage(files[i]);
-                base64Images.push(b64);
-            }
-
-            let payload = {
-                action: 'register',
-                userId: loggedInUser,
-                name: name,
-                address: document.getElementById('regAddress').value,
-                lat: position.getLat(),
-                lng: position.getLng(),
-                type: document.getElementById('regType').value,
-                password: document.getElementById('regPassword').value,
-                hours: document.getElementById('regHours').value,
-                bidet: document.getElementById('regBidet').value,
-                toiletCnt: document.getElementById('regToilet').value,
-                urinalCnt: document.getElementById('regUrinal').value,
-                images: base64Images
-            };
-
-            try {
-                let response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
-                });
-                let result = await response.json();
-                if(result.success) {
-                    alert("성공적으로 등록되었습니다!");
-                    document.getElementById('registerModal').style.display = 'none';
-                    window.location.reload(); 
-                } else {
-                    alert("오류: " + result.message);
-                }
-            } catch(e) { 
-                console.error(e);
-                alert("등록 실패. 다시 시도해주세요."); 
-            }
-            
-            btn.innerText = "등록하기";
-            btn.disabled = false;
-        }
-    </script>
+    // 앱 시작 시 정적 JSON 데이터 로드 실행
+    window.onload = loadToiletData;
+  </script>
 </body>
 </html>
