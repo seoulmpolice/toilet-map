@@ -25,7 +25,8 @@
         /* 화장실 상세 정보 및 이미지 팝업 */
         #imageZoomModal { z-index: 9999; background: rgba(0,0,0,0.8); cursor: pointer; display: none; align-items: center; justify-content: center; }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
-        .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 10px; }
+        .info-title { font-size: 18px; font-weight: bold; color: #003478; margin-bottom: 10px; }
+        .info-workplace { font-size: 13px; color: #555; margin-bottom: 5px; font-weight: normal; }
         .info-row { margin-bottom: 5px; font-size: 14px; }
         .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 12px; color: white; margin-bottom: 10px;}
         .badge-police { background: #d32f2f; }
@@ -61,6 +62,14 @@
             <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
             <h2 style="color:#003478; margin-top:0;">신규 화장실 등록</h2>
             <p style="font-size: 12px; color: #d32f2f; font-weight: bold;">※ 클릭하신 위치로 화장실이 등록됩니다.</p>
+            
+            <label style="font-size: 12px; font-weight:bold;">근무장소 (목록 선택 또는 직접 입력)</label>
+            <input type="text" id="regWorkplace" list="workplaceList" placeholder="근무장소 (예: 광화문 광장)" autocomplete="off" required>
+            <datalist id="workplaceList">
+                <!-- 자바스크립트를 통해 기본 목록 및 추가된 장소가 여기에 렌더링됩니다. -->
+            </datalist>
+
+            <label style="font-size: 12px; font-weight:bold; margin-top:10px; display:block;">화장실 이름</label>
             <input type="text" id="regName" placeholder="화장실 이름 (예: OO빌딩 1층)" required>
             
             <div style="display:flex; gap:5px; align-items:center; margin: 8px 0;">
@@ -100,13 +109,13 @@
     </div>
 
     <!-- 4. 사진 확대 모달 -->
-    <div id="imageZoomModal" class="modal" onclick="closeZoom()">
+    <div id="imageZoomModal" class="modal" onclick="closeZoom()" style="display: none; align-items: center; justify-content: center;">
         <img id="zoomImage" src="" alt="확대된 사진">
     </div>
 
     <script>
-        // ★ 업데이트된 Web App URL
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwF2HbyWbbm4pW7rAdgHrf0RpL3xSm_QdX9mB7cqtsRf9LNKGw3li7zWgvZpBw3LtktDQ/exec'; 
+        // ★ 새로운 Web App URL로 업데이트 됨
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw1bT0fmCcvCoHzWZ_zKAMU6Liiwd_KPuZbIWTDILO0kCsibH6byK4oNTvSFHvErSEXwg/exec'; 
         
         let map;
         let loggedInUser = null;
@@ -114,6 +123,14 @@
         let isRegisterMode = false;
         let geocoder; 
         let markers = []; 
+
+        // ★ 사전에 정의된 기본 근무장소 목록
+        const defaultWorkplaces = [
+            "송파(올림픽공원)", "미국 대사관", "미국 대사관저", "일본 대사관", 
+            "일본 대사관저", "중국 대사관", "중국 대사관저", "이스라엘 대사관", 
+            "이스라엘 문화원", "이스라엘 대사관저", "파키스탄 대사관", 
+            "정부종합청사", "민생치안 강남", "민생치안", "구로 평강교회", "여의도"
+        ];
 
         window.onload = function() {
             let container = document.getElementById('map');
@@ -153,7 +170,6 @@
             }
         }
 
-        // 일반 사용자용 정적 파일 로딩 (GitHub Actions 생성 파일)
         async function loadStaticToilets() {
             try {
                 let response = await fetch('./data/toilets.json');
@@ -162,11 +178,10 @@
                 renderMarkers(data);
             } catch(e) { 
                 console.log("정적 데이터 로드 실패, 실시간 백업 API 호출:", e);
-                fetchLiveData(); // 파일이 아직 생성 전일 경우 예외처리로 실시간 로드
+                fetchLiveData(); 
             }
         }
 
-        // 관리자용 수동 업데이트 기능 (실시간 최신화)
         async function fetchLiveData() {
             const syncBtn = document.getElementById('btn-sync');
             syncBtn.innerText = "⏳ 갱신 중...";
@@ -187,6 +202,13 @@
         function renderMarkers(dataArray) {
             markers.forEach(m => m.setMap(null));
             markers = [];
+
+            // ★ 기본 목록과 사용자가 새롭게 입력한 목록을 합치고 중복 제거
+            const fetchedWorkplaces = dataArray.map(t => t.workplace).filter(Boolean);
+            const combinedWorkplaces = [...new Set([...defaultWorkplaces, ...fetchedWorkplaces])];
+            
+            const dataList = document.getElementById('workplaceList');
+            dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
             dataArray.forEach(t => {
                 let marker = new kakao.maps.Marker({
@@ -215,7 +237,10 @@
 
             let html = `
                 <span class="close-btn" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
-                <div class="info-title">${data.name}</div>
+                <div class="info-title">
+                    <div class="info-workplace">🏢 근무장소: ${data.workplace || '미지정'}</div>
+                    ${data.name}
+                </div>
                 <div class="badge ${badgeClass}">${data.type}</div>
                 <div class="info-row">📍 <b>주소:</b> ${data.address || '정보없음'}</div>
                 <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
@@ -255,7 +280,7 @@
             loggedInUser = id;
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
-            document.getElementById('btn-sync').style.display = 'block'; // 수동 업데이트 버튼 활성화
+            document.getElementById('btn-sync').style.display = 'block'; 
             
             let adminBtn = document.getElementById('btn-admin');
             adminBtn.innerText = "➕ 새 화장실 등록";
@@ -342,7 +367,10 @@
         }
 
         async function registerToilet() {
+            let workplace = document.getElementById('regWorkplace').value;
             let name = document.getElementById('regName').value;
+            
+            if(!workplace) return alert("근무장소를 입력하거나 선택해주세요.");
             if(!name) return alert("화장실 이름을 입력해주세요.");
 
             let btn = document.querySelector('#registerModal .submit-btn');
@@ -365,11 +393,19 @@
             }
 
             let payload = {
-                action: 'register', userId: loggedInUser, name: name, address: document.getElementById('regAddress').value,
-                lat: position.getLat(), lng: position.getLng(), type: document.getElementById('regType').value,
-                password: document.getElementById('regPassword').value, hours: document.getElementById('regHours').value,
-                bidet: document.getElementById('regBidet').value, toiletCnt: document.getElementById('regToilet').value,
-                urinalCnt: document.getElementById('regUrinal').value, images: base64Images
+                action: 'register', 
+                userId: loggedInUser, 
+                workplace: workplace, 
+                name: name, 
+                address: document.getElementById('regAddress').value,
+                lat: position.getLat(), lng: position.getLng(), 
+                type: document.getElementById('regType').value,
+                password: document.getElementById('regPassword').value, 
+                hours: document.getElementById('regHours').value,
+                bidet: document.getElementById('regBidet').value, 
+                toiletCnt: document.getElementById('regToilet').value,
+                urinalCnt: document.getElementById('regUrinal').value, 
+                images: base64Images
             };
 
             try {
