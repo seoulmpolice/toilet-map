@@ -27,12 +27,14 @@
         #searchInput { flex: 1; margin: 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
         #search-box button { width: auto; background: #003478; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin: 0; }
 
-        /* 플로팅 버튼 */
-        .btn-floating { position: fixed; z-index: 10; padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; }
-        #btn-myloc { bottom: 20px; right: 20px; }
-        #btn-admin { top: 75px; right: 20px; background: #003478; color: white; } /* 검색창과 겹치지 않게 top 여백 조정 */
-        #btn-logout { top: 125px; right: 20px; background: #555; color: white; display: none; }
-        #btn-sync { top: 175px; right: 20px; background: #2e7d32; color: white; display: none; } 
+        /* 플로팅 버튼 (위치 및 순서 재배치) */
+        .btn-floating { position: fixed; z-index: 10; padding: 12px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; }
+        
+        /* 내 위치 버튼을 최상단으로 올림 */
+        #btn-myloc { top: 75px; right: 20px; background: white; color: black; }
+        #btn-admin { top: 130px; right: 20px; background: #003478; color: white; }
+        #btn-logout { top: 185px; right: 20px; background: #555; color: white; display: none; }
+        #btn-sync { top: 240px; right: 20px; background: #2e7d32; color: white; display: none; } 
 
         /* 모달 및 폼 공통 스타일 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
@@ -52,9 +54,6 @@
         .badge-public { background: #1976d2; }
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; }
-        
-        /* 내 위치 경찰관 마커 스타일 */
-        .police-marker { font-size: 30px; background: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; }
     </style>
     <!-- 카카오맵 API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
@@ -65,14 +64,15 @@
     
     <!-- 최상단 검색창 -->
     <div id="search-box">
-        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.keyCode===13) searchToilet()">
+        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeyup="if(window.event.keyCode==13){searchToilet()}">
         <button onclick="searchToilet()">검색</button>
     </div>
 
+    <!-- 순서 재배치된 플로팅 버튼들 -->
+    <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
     <button id="btn-admin" class="btn-floating" onclick="document.getElementById('loginModal').style.display='block'">관리자 접속</button>
     <button id="btn-logout" class="btn-floating" onclick="logout()">로그아웃</button>
-    <button id="btn-sync" class="btn-floating" onclick="fetchLiveData()">🔄 데이터 실시간 업데이트</button>
-    <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
+    <button id="btn-sync" class="btn-floating" onclick="fetchLiveData()">🔄 실시간 업데이트</button>
 
     <!-- 1. 로그인 모달 -->
     <div id="loginModal" class="modal">
@@ -146,11 +146,11 @@
         let map;
         let loggedInUser = null;
         let registerMarker = null; 
-        let myLocMarker = null; // 내 위치 마커 변수
+        let myLocMarker = null; // 내 위치 경찰관 마커
         let isRegisterMode = false;
         let geocoder; 
         let markers = []; 
-        let allToiletsData = []; // 검색 기능을 위해 전체 데이터를 담을 배열
+        let allToiletsData = []; // 검색 기능을 위해 원본 전체 데이터를 보관할 배열
 
         const defaultWorkplaces = [
             "송파(올림픽공원)", "미국 대사관", "미국 대사관저", "일본 대사관", 
@@ -185,26 +185,27 @@
             checkLoginStatus(); 
         };
 
-        // 내 위치로 이동 및 경찰관 마커 표시
+        // ★ 수정됨: 내 위치 경찰관(👮) 마커 로직 적용
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
                     let locPosition = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
                     map.setCenter(locPosition);
-                    map.setLevel(4); // 적당한 줌 레벨로 확대
+                    map.setLevel(4); // 적절한 줌 레벨로 확대
 
                     // 기존 내 위치 마커가 있다면 제거
                     if(myLocMarker) {
                         myLocMarker.setMap(null);
                     }
 
-                    // 경찰관(👮) 모양의 커스텀 오버레이 생성
-                    let content = '<div class="police-marker">👮</div>';
+                    // CSS 효과가 적용된 경찰관 이모지 오버레이 마커
+                    let content = '<div style="font-size: 35px; background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; line-height:1;">👮</div>';
+                    
                     myLocMarker = new kakao.maps.CustomOverlay({
                         map: map,
                         position: locPosition,
                         content: content,
-                        yAnchor: 1
+                        yAnchor: 1 // 마커의 꼬리가 좌표에 맞도록 설정
                     });
                 });
             } else {
@@ -217,7 +218,7 @@
                 let response = await fetch('./data/toilets.json');
                 if (!response.ok) throw new Error("JSON 파일을 찾을 수 없습니다.");
                 let data = await response.json();
-                allToiletsData = data; // 전역 변수에 저장
+                allToiletsData = data; 
                 renderMarkers(data);
             } catch(e) { 
                 console.log("정적 데이터 로드 실패, 실시간 백업 API 호출:", e);
@@ -232,7 +233,7 @@
                 let response = await fetch(SCRIPT_URL, { redirect: 'follow' });
                 let result = await response.json();
                 if(result.success) {
-                    allToiletsData = result.data; // 전역 변수에 저장
+                    allToiletsData = result.data; 
                     renderMarkers(result.data);
                     alert("실시간으로 최신 데이터가 반영되었습니다.");
                 }
@@ -240,19 +241,22 @@
                 alert("데이터를 갱신하는데 실패했습니다.");
                 console.log(e);
             }
-            syncBtn.innerText = "🔄 데이터 실시간 업데이트";
+            syncBtn.innerText = "🔄 실시간 업데이트";
         }
 
+        // 마커 렌더링 함수
         function renderMarkers(dataArray) {
+            // 기존 맵 위의 마커들을 모두 지웁니다
             markers.forEach(m => m.setMap(null));
             markers = [];
 
-            const fetchedWorkplaces = dataArray.map(t => t.workplace).filter(Boolean);
+            // 셀렉트 박스(목록)는 필터링과 무관하게 전체 데이터(allToiletsData)를 기준으로 그립니다.
+            const fetchedWorkplaces = allToiletsData.map(t => t.workplace).filter(Boolean);
             const combinedWorkplaces = [...new Set([...defaultWorkplaces, ...fetchedWorkplaces])];
-            
             const dataList = document.getElementById('workplaceList');
             dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
+            // 넘겨받은 데이터(필터링 된 데이터 포함)만 지도에 그립니다.
             dataArray.forEach(t => {
                 let marker = new kakao.maps.Marker({
                     map: map, position: new kakao.maps.LatLng(t.lat, t.lng)
@@ -262,24 +266,36 @@
             });
         }
 
-        // 검색 기능 로직
+        // ★ 수정됨: 검색 시 해당 화장실들만 표시(필터링)되도록 강화된 로직
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
-            if (!keyword) return alert("검색어를 입력해주세요.");
+            
+            // 검색어가 비어있을 경우 전체 마커를 다시 표시
+            if (!keyword) {
+                renderMarkers(allToiletsData);
+                return;
+            }
 
-            // 근무장소 또는 화장실 이름으로 검색
-            let found = allToiletsData.find(t => 
+            // 근무장소 또는 화장실 이름에 키워드가 포함된 데이터 필터링
+            let filtered = allToiletsData.filter(t => 
                 (t.name && t.name.includes(keyword)) || 
                 (t.workplace && t.workplace.includes(keyword))
             );
 
-            if (found) {
-                let loc = new kakao.maps.LatLng(found.lat, found.lng);
-                map.setCenter(loc); // 해당 위치로 이동
-                map.setLevel(3);    // 줌 인
-                showToiletInfo(found); // 즉시 팝업 오픈
+            if (filtered.length > 0) {
+                // 필터링된 결과만 지도에 렌더링 (다른 핀은 사라짐)
+                renderMarkers(filtered); 
+
+                // 검색된 모든 마커가 화면에 들어오도록 지도의 중심점과 축척(Zoom) 자동 조정
+                let bounds = new kakao.maps.LatLngBounds();
+                filtered.forEach(t => {
+                    bounds.extend(new kakao.maps.LatLng(t.lat, t.lng));
+                });
+                map.setBounds(bounds); 
+                
             } else {
                 alert("일치하는 화장실이나 근무장소가 없습니다.");
+                renderMarkers(allToiletsData); // 결과가 없으면 전체 복구
             }
         }
 
