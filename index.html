@@ -8,16 +8,35 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100vh; }
         
-        /* 플로팅 버튼 공통 스타일 및 위치 재배치 */
+        /* 최상단 키워드 검색창 스타일 */
+        #search-box {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            display: flex;
+            gap: 5px;
+            width: 90%;
+            max-width: 400px;
+        }
+        #searchInput { flex: 1; margin: 0; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        #search-box button { width: auto; background: #003478; color: white; border: none; padding: 10px 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin: 0; }
+
+        /* 플로팅 버튼 스타일 및 요청하신 UI 배치 반영 */
         .btn-floating { position: fixed; z-index: 10; padding: 12px 16px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); cursor: pointer; border: none; font-weight: bold; font-size: 14px; }
         
-        /* 내 위치 버튼 (초록색 박스로 변경) */
-        #btn-myloc { top: 20px; right: 20px; background: #2e7d32; color: white; }
+        /* 검색창 아래 왼쪽: 내 위치 버튼 (초록색) */
+        #btn-myloc { top: 75px; right: 20px; background: #2e7d32; color: white; }
         
-        /* 관리자 접속 버튼 (내 위치 버튼 바로 아래 배치) */
-        #btn-admin { top: 75px; right: 20px; background: #003478; color: white; }
+        /* 내 위치 바로 오른쪽/아래: 관리자 접속 버튼 (파란색) */
+        #btn-admin { top: 130px; right: 20px; background: #003478; color: white; }
         
-        #btn-logout { top: 130px; right: 20px; background: #555; color: white; display: none; }
+        #btn-logout { top: 185px; right: 20px; background: #555; color: white; display: none; }
 
         /* 모달 공통 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
@@ -50,7 +69,13 @@
 
     <div id="map"></div>
     
-    <!-- 위치 변경 및 디자인 수정된 버튼들 -->
+    <!-- 최상단 키워드 검색창 -->
+    <div id="search-box">
+        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
+        <button onclick="searchToilet()">검색</button>
+    </div>
+
+    <!-- UI 개편된 플로팅 버튼들 -->
     <button id="btn-myloc" class="btn-floating" onclick="moveToMyLocation()">내 위치 📍</button>
     <button id="btn-admin" class="btn-floating" onclick="document.getElementById('loginModal').style.display='block'">관리자 접속</button>
     <button id="btn-logout" class="btn-floating" onclick="logout()">로그아웃</button>
@@ -116,8 +141,8 @@
     </div>
 
     <script>
-        // GitHub Actions를 통해 정적 파일로 읽어오되, 파일이 없을 경우 실시간 백업용으로 기존 웹앱 URL을 활용합니다.
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDTe5IrmjMdD0IoURXiI2wMwsiPJhTlE_ppdUyqnK1kUDKQP8zHY6E2uGdtE3rN9HJXA/exec'; 
+        // 새로운 Web App URL 입력란 (배포 후 주소를 여기에 넣어주세요)
+        const SCRIPT_URL = '여기에_새로운_WEB_APP_URL_입력'; 
         
         let map;
         let loggedInUser = null;
@@ -207,6 +232,28 @@
                     });
                 }
             } catch(e) { console.log("API 데이터 로드 실패:", e); }
+        }
+
+        // 키워드 검색 기능
+        function searchToilet() {
+            let keyword = document.getElementById('searchInput').value.trim();
+            if (!keyword) {
+                alert("검색어를 입력해주세요.");
+                return;
+            }
+
+            let found = toiletsData.find(t => 
+                (t.name && t.name.toLowerCase().includes(keyword.toLowerCase()))
+            );
+
+            if (found) {
+                let targetLoc = new kakao.maps.LatLng(found.lat, found.lng);
+                map.setCenter(targetLoc);
+                map.setLevel(3);
+                showToiletInfo(found);
+            } else {
+                alert("일치하는 화장실을 찾을 수 없습니다.");
+            }
         }
 
         // 상세 정보 표시
@@ -409,7 +456,7 @@
                 hours: document.getElementById('regHours').value,
                 bidet: document.getElementById('regBidet').value, 
                 toiletCnt: document.getElementById('regToilet').value,
-                urinalCnt: document.getElementById('regUrinal').value, 
+                urinalCnt: document.getElementById('regUrinal'].value, 
                 images: base64Images
             };
 
