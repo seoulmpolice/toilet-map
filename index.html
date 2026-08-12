@@ -280,10 +280,21 @@
             dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
             dataArray.forEach(t => {
-                // ★ 모든 화장실 마커의 테두리를 빨간색으로 통일
-                let borderColor = '#d32f2f'; // 빨간색
+                // ★ 청결도에 따라 마커 색상 복구 (진한 초록, 주황, 빨강)
+                let cleanlinessText = t.cleanliness || '중';
+                let borderColor = '#ff9800'; // 기본 주황색
                 let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
                 let iconSize = '35px';
+
+                if (cleanlinessText === '상') {
+                    borderColor = '#2e7d32'; // 진한 초록색
+                    shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.7);'; // 은은한 초록 빛
+                    iconSize = '38px'; 
+                } else if (cleanlinessText === '중') {
+                    borderColor = '#ff9800'; // 주황색
+                } else if (cleanlinessText === '하') {
+                    borderColor = '#d32f2f'; // 빨간색
+                }
 
                 let content = document.createElement('div');
                 content.style.cssText = `font-size: 22px; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer;`;
@@ -364,16 +375,15 @@
                     
                     imagesHtml += `<img src="${finalSrc}" alt="화장실사진" onclick="openZoom(this.src)" onerror="this.src='https://via.placeholder.com/150?text=Image+Error';">`; 
                 });
-                // ★ '좌우로 스크롤 가능' 텍스트 제거
                 imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">사진 터치 시 확대</p>`;
             }
 
-            // 팝업 내 청결도 글씨 색상 적용
+            // ★ 팝업 내 청결도 글씨 색상 적용 (진한 초록, 주황, 빨강)
             let cleanlinessText = data.cleanliness || '정보없음';
             let cleanlinessColor = '#333';
-            if (cleanlinessText === '상') cleanlinessColor = '#4caf50';
+            if (cleanlinessText === '상') cleanlinessColor = '#2e7d32';
             else if (cleanlinessText === '중') cleanlinessColor = '#ff9800';
-            else if (cleanlinessText === '하') cleanlinessColor = '#f44336';
+            else if (cleanlinessText === '하') cleanlinessColor = '#d32f2f';
 
             let html = `
                 <span class="close-btn" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
