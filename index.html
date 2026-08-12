@@ -34,9 +34,9 @@
         #btn-logout { top: 185px; right: 20px; background: #555; color: white; display: none; }
         #btn-sync { top: 240px; right: 20px; background: #2e7d32; color: white; display: none; } 
 
-        /* 모달 및 폼 공통 스타일 (★ 모바일 스크롤 가능하도록 수정) */
+        /* 모달 및 폼 공통 스타일 (★ 모바일 하단 스크롤 여백 추가) */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 20; }
-        .modal-content { background: white; width: 90%; max-width: 400px; margin: 5% auto; padding: 20px; border-radius: 10px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .modal-content { background: white; width: 90%; max-width: 400px; margin: 5% auto; padding: 20px 20px 40px 20px; border-radius: 10px; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
         .close-btn { float: right; cursor: pointer; font-size: 20px; }
         input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
@@ -45,7 +45,7 @@
         #imageZoomModal { z-index: 9999; background: rgba(0,0,0,0.8); cursor: pointer; display: none; align-items: center; justify-content: center; }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
         
-        /* ★ 근무장소 진하고 크게 변경 */
+        /* 근무장소 진하고 크게 */
         .info-title { font-size: 19px; font-weight: bold; color: #003478; margin-bottom: 10px; }
         .info-workplace { font-size: 16px; color: #111; margin-bottom: 6px; font-weight: 800; }
         
@@ -101,7 +101,7 @@
         </div>
     </div>
 
-    <!-- 2. 화장실 등록 모달 (스크롤 가능) -->
+    <!-- 2. 화장실 등록 모달 (스크롤 개선) -->
     <div id="registerModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="document.getElementById('registerModal').style.display='none'">&times;</span>
@@ -125,7 +125,6 @@
                 <option value="공공개방">일반 공공개방 화장실</option>
             </select>
             
-            <!-- ★ 청결도 선택 항목 추가 -->
             <label style="font-size: 12px; font-weight:bold; margin-top:5px; display:block;">청결도 선택</label>
             <select id="regCleanliness" required>
                 <option value="중">청결도 선택 (기본: 중)</option>
@@ -152,7 +151,8 @@
             <label style="font-size: 12px; margin-top:10px; display:block;">사진 첨부 2 (자동 압축)</label>
             <input type="file" id="regImage2" accept="image/*">
             
-            <button class="submit-btn" style="margin-top:20px;" onclick="registerToilet()">등록하기</button>
+            <!-- ★ 하단 마진(margin-bottom)을 넉넉히 추가하여 휴대폰에서 잘 눌리도록 수정 -->
+            <button class="submit-btn" style="margin-top:20px; margin-bottom: 40px;" onclick="registerToilet()">등록하기</button>
         </div>
     </div>
 
@@ -167,7 +167,6 @@
     </div>
 
     <script>
-        // ★ 새로운 Web App URL 반영
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFgfxRpK5dCatdEFaUs7TN2nBsfb34OLhLb7BfzgSQAnIDNvKAYFbRnXDEW50V_s55SQ/exec'; 
         
         let map;
@@ -282,17 +281,20 @@
             dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
             dataArray.forEach(t => {
-                let isCleanHigh = (t.cleanliness === '상');
-
-                let borderColor = '#d32f2f';
+                // ★ 청결도에 따른 마커 색상 설정
+                let cleanlinessText = t.cleanliness || '중';
+                let borderColor = '#9e9e9e'; // 기본 회색
                 let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
                 let iconSize = '35px';
 
-                if (isCleanHigh) {
-                    // ★ 청결도가 '상'인 경우 돋보이는 디자인 적용
-                    borderColor = '#00b0ff';
-                    shadowStyle = 'box-shadow: 0 0 12px 3px rgba(0, 176, 255, 0.8);';
+                if (cleanlinessText === '상') {
+                    borderColor = '#4caf50'; // 초록색
+                    shadowStyle = 'box-shadow: 0 0 10px 2px rgba(76, 175, 80, 0.7);'; // 은은한 초록 빛
                     iconSize = '38px'; 
+                } else if (cleanlinessText === '중') {
+                    borderColor = '#ff9800'; // 주황색
+                } else if (cleanlinessText === '하') {
+                    borderColor = '#f44336'; // 빨간색
                 }
 
                 let content = document.createElement('div');
@@ -377,8 +379,12 @@
                 imagesHtml += `</div><p style="font-size:11px; color:gray; margin-top:0;">좌우로 스크롤 가능 / 사진 터치 시 확대</p>`;
             }
 
+            // 팝업 내 청결도 글씨 색상 적용
             let cleanlinessText = data.cleanliness || '정보없음';
-            let cleanlinessColor = cleanlinessText === '상' ? '#0077c2' : '#333';
+            let cleanlinessColor = '#333';
+            if (cleanlinessText === '상') cleanlinessColor = '#4caf50';
+            else if (cleanlinessText === '중') cleanlinessColor = '#ff9800';
+            else if (cleanlinessText === '하') cleanlinessColor = '#f44336';
 
             let html = `
                 <span class="close-btn" onclick="document.getElementById('infoModal').style.display='none'">&times;</span>
