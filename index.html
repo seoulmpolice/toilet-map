@@ -53,31 +53,32 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 150px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; }
 
-        /* 검색 마커 강조 (번쩍이는 효과) 애니메이션 */
+        /* ★ 검색 마커 강조 (번쩍이는 효과) 애니메이션 */
         .pulse-marker {
-            width: 50px; height: 50px;
-            background: rgba(255, 0, 0, 0.4);
+            width: 70px; 
+            height: 70px;
+            background: rgba(255, 0, 0, 0.3);
             border-radius: 50%;
-            border: 3px solid red;
+            border: 3px solid rgba(255, 0, 0, 0.8);
             animation: pulse 1s infinite ease-in-out;
             pointer-events: none; /* 클릭 방해 금지 */
-            display: flex; align-items: center; justify-content: center;
         }
         @keyframes pulse {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+            0% { transform: scale(0.1); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
         }
     </style>
-    <!-- 카카오맵 API -->
+    <!-- 카카오맵 API (App Key 확인 요망) -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
 <body>
 
     <div id="map"></div>
     
-    <!-- 최상단 검색창 (엔터키 처리 수정) -->
+    <!-- 최상단 검색창 -->
     <div id="search-box">
-        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeydown="if(event.key === 'Enter') searchToilet()">
+        <!-- 엔터키 처리를 안정적으로 수정 -->
+        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
         <button onclick="searchToilet()">검색</button>
     </div>
 
@@ -227,9 +228,13 @@
             try {
                 let response = await fetch('./data/toilets.json');
                 if (!response.ok) throw new Error("JSON 파일을 찾을 수 없습니다.");
-                let data = await response.json();
-                allToiletsData = data; 
-                renderMarkers(data);
+                let result = await response.json();
+                
+                // ★ 버그 수정: JSON 구조가 {success: true, data: [...]} 형태일 경우 data 배열만 추출
+                let dataArray = result.data ? result.data : result;
+                allToiletsData = dataArray; 
+                
+                renderMarkers(dataArray);
             } catch(e) { 
                 console.log("정적 데이터 로드 실패, 실시간 백업 API 호출:", e);
                 fetchLiveData(); 
@@ -258,7 +263,9 @@
             markers.forEach(m => m.setMap(null));
             markers = [];
 
-            const fetchedWorkplaces = allToiletsData.map(t => t.workplace).filter(Boolean);
+            if(!dataArray || !Array.isArray(dataArray)) return;
+
+            const fetchedWorkplaces = dataArray.map(t => t.workplace).filter(Boolean);
             const combinedWorkplaces = [...new Set([...defaultWorkplaces, ...fetchedWorkplaces])];
             const dataList = document.getElementById('workplaceList');
             dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
@@ -272,7 +279,7 @@
             });
         }
 
-        // ★ 수정됨: 검색 기능 고도화 및 번쩍이는 강조 효과 적용
+        // ★ 버그 수정: 검색 기능과 애니메이션 마커 위치 완벽 동기화
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
             
@@ -281,7 +288,13 @@
                 return;
             }
 
-            // 대소문자 무관, 공백 제거 후 꼼꼼히 검색
+            // 데이터가 비어있는 경우 방어
+            if (!allToiletsData || allToiletsData.length === 0) {
+                alert("아직 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            // 대소문자 무관, 공백 제거 후 검색
             let found = allToiletsData.find(t => 
                 (t.name && t.name.toLowerCase().includes(keyword.toLowerCase())) || 
                 (t.workplace && t.workplace.toLowerCase().includes(keyword.toLowerCase()))
@@ -290,22 +303,24 @@
             if (found) {
                 let targetLoc = new kakao.maps.LatLng(found.lat, found.lng);
                 
-                // 검색된 위치로 이동 및 줌인
+                // 검색된 위치로 지도를 부드럽게 이동하고 줌인
                 map.setCenter(targetLoc); 
                 map.setLevel(3);    
                 
                 // 상세정보 팝업 바로 열기
                 showToiletInfo(found); 
 
-                // 번쩍이는 효과(Pulse) 오버레이 생성
-                if (highlightOverlay) { highlightOverlay.setMap(null); } // 기존 효과 제거
+                // 번쩍이는 효과(Pulse) 오버레이 생성 (마커들의 기본 핀과 겹치지 않게)
+                if (highlightOverlay) { highlightOverlay.setMap(null); } 
+                
                 let highlightContent = '<div class="pulse-marker"></div>';
                 highlightOverlay = new kakao.maps.CustomOverlay({
                     map: map,
                     position: targetLoc,
                     content: highlightContent,
-                    yAnchor: 0.5, // 핀 정중앙에 맞춤
-                    zIndex: -1 // 카카오 기본 마커 아래에 깔리도록 설정
+                    xAnchor: 0.5, // 핀의 가로 정중앙
+                    yAnchor: 1.0, // 핀의 바닥(끝점) 기준으로 이펙트 발산
+                    zIndex: 1 // 핀보다 위에 살짝 얹어서 잘 보이도록 설정
                 });
 
                 // 3초 후 번쩍임 효과 자동 제거
