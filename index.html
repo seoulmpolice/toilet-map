@@ -77,7 +77,6 @@
     
     <!-- 최상단 검색창 -->
     <div id="search-box">
-        <!-- 엔터키 처리를 안정적으로 수정 -->
         <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
         <button onclick="searchToilet()">검색</button>
     </div>
@@ -274,12 +273,10 @@
                 let isPolice = t.type && t.type.includes('경찰');
                 let borderColor = isPolice ? '#d32f2f' : '#1976d2';
 
-                // ★ 이모지(🚻) 대신 다운로드한 화장실 이미지 아이콘을 사용하도록 변경
+                // ★ 기존의 기본 마커 대신 화장실(🚻) 모양 이모지를 포함한 커스텀 HTML 요소 생성
                 let content = document.createElement('div');
-                content.style.cssText = `background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid ${borderColor}; cursor: pointer; overflow: hidden;`;
-                
-                // 다운로드 후 GitHub에 업로드한 이미지 경로 (경로가 다를 경우 src 속성을 수정해 주세요)
-                content.innerHTML = `<img src="./toilet-icon.png" style="width: 22px; height: 22px;" alt="화장실">`;
+                content.style.cssText = `font-size: 20px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid ${borderColor}; line-height: 1; cursor: pointer;`;
+                content.innerHTML = '🚻';
                 
                 // 마커 클릭 시 상세정보 팝업 연결
                 content.onclick = function() { 
