@@ -17,7 +17,7 @@ jobs:
         run: |
           mkdir -p data
           # 새로 발급받은 Web App URL 적용
-          curl -L "https://script.google.com/macros/s/AKfycbwF2HbyWbbm4pW7rAdgHrf0RpL3xSm_QdX9mB7cqtsRf9LNKGw3li7zWgvZpBw3LtktDQ/exec" -o data/toilets.json
+          curl -L "https://script.google.com/macros/s/AKfycbzFgfxRpK5dCatdEFaUs7TN2nBsfb34OLhLb7BfzgSQAnIDNvKAYFbRnXDEW50V_s55SQ/exec" -o data/toilets.json
 
       - name: 변경사항 커밋 및 푸시
         run: |
