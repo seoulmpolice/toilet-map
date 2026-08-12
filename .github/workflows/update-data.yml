@@ -2,9 +2,9 @@ name: Update Toilet Data JSON
 
 on:
   schedule:
-    # 한국 시간 기준 매일 오전 6시(UTC 21시) 등에 자동 실행하도록 크론(cron) 설정 
-    - cron: '0 21 * * *' 
-  workflow_dispatch: # GitHub 웹페이지에서 수동으로 실행할 수 있는 버튼 생성
+    # UTC 기준 11:00은 한국 시간(KST)으로 20:00입니다. (매일 20:00 자동 실행)
+    - cron: '0 11 * * *' 
+  workflow_dispatch: # GitHub 웹사이트에서 수동으로 즉시 실행할 수 있는 버튼 활성화
 
 jobs:
   update-data:
@@ -16,13 +16,13 @@ jobs:
       - name: GAS에서 데이터 가져오기 (JSON 저장)
         run: |
           mkdir -p data
-          # ${{ secrets.GAS_WEBAPP_URL }} 부분은 GitHub 저장소 Settings -> Secrets에 GAS 웹앱 URL을 등록하여 사용합니다.
-          curl -L "${{ secrets.GAS_WEBAPP_URL }}" -o data/toilets.json
+          # 새로 발급받은 Web App URL 적용
+          curl -L "https://script.google.com/macros/s/AKfycbwF2HbyWbbm4pW7rAdgHrf0RpL3xSm_QdX9mB7cqtsRf9LNKGw3li7zWgvZpBw3LtktDQ/exec" -o data/toilets.json
 
       - name: 변경사항 커밋 및 푸시
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions Bot"
           git add data/toilets.json
-          git commit -m "Auto-update: 화장실 데이터 최신화" || echo "변경된 데이터가 없습니다."
+          git commit -m "Auto-update: 화장실 데이터 매일 20시 정기 갱신" || echo "변경된 데이터가 없습니다."
           git push
