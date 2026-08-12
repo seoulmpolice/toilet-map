@@ -77,6 +77,7 @@
     
     <!-- 최상단 검색창 -->
     <div id="search-box">
+        <!-- 엔터키 처리를 안정적으로 수정 -->
         <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
         <button onclick="searchToilet()">검색</button>
     </div>
@@ -229,6 +230,7 @@
                 if (!response.ok) throw new Error("JSON 파일을 찾을 수 없습니다.");
                 let result = await response.json();
                 
+                // ★ 버그 수정: JSON 구조가 {success: true, data: [...]} 형태일 경우 data 배열만 추출
                 let dataArray = result.data ? result.data : result;
                 allToiletsData = dataArray; 
                 
@@ -269,32 +271,15 @@
             dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
             dataArray.forEach(t => {
-                // ★ 경찰 화장실 여부에 따른 테두리 색상 처리
-                let isPolice = t.type && t.type.includes('경찰');
-                let borderColor = isPolice ? '#d32f2f' : '#1976d2';
-
-                // ★ 기존의 기본 마커 대신 화장실(🚻) 모양 이모지를 포함한 커스텀 HTML 요소 생성
-                let content = document.createElement('div');
-                content.style.cssText = `font-size: 20px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid ${borderColor}; line-height: 1; cursor: pointer;`;
-                content.innerHTML = '🚻';
-                
-                // 마커 클릭 시 상세정보 팝업 연결
-                content.onclick = function() { 
-                    showToiletInfo(t); 
-                };
-
-                // 카카오맵 CustomOverlay를 사용하여 생성한 DOM 엘리먼트 배치
-                let marker = new kakao.maps.CustomOverlay({
-                    map: map, 
-                    position: new kakao.maps.LatLng(t.lat, t.lng),
-                    content: content,
-                    yAnchor: 1
+                let marker = new kakao.maps.Marker({
+                    map: map, position: new kakao.maps.LatLng(t.lat, t.lng)
                 });
-                
+                kakao.maps.event.addListener(marker, 'click', function() { showToiletInfo(t); });
                 markers.push(marker);
             });
         }
 
+        // ★ 버그 수정: 검색 기능과 애니메이션 마커 위치 완벽 동기화
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
             
@@ -303,11 +288,13 @@
                 return;
             }
 
+            // 데이터가 비어있는 경우 방어
             if (!allToiletsData || allToiletsData.length === 0) {
                 alert("아직 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
                 return;
             }
 
+            // 대소문자 무관, 공백 제거 후 검색
             let found = allToiletsData.find(t => 
                 (t.name && t.name.toLowerCase().includes(keyword.toLowerCase())) || 
                 (t.workplace && t.workplace.toLowerCase().includes(keyword.toLowerCase()))
@@ -316,11 +303,14 @@
             if (found) {
                 let targetLoc = new kakao.maps.LatLng(found.lat, found.lng);
                 
+                // 검색된 위치로 지도를 부드럽게 이동하고 줌인
                 map.setCenter(targetLoc); 
                 map.setLevel(3);    
                 
+                // 상세정보 팝업 바로 열기
                 showToiletInfo(found); 
 
+                // 번쩍이는 효과(Pulse) 오버레이 생성 (마커들의 기본 핀과 겹치지 않게)
                 if (highlightOverlay) { highlightOverlay.setMap(null); } 
                 
                 let highlightContent = '<div class="pulse-marker"></div>';
@@ -328,11 +318,12 @@
                     map: map,
                     position: targetLoc,
                     content: highlightContent,
-                    xAnchor: 0.5,
-                    yAnchor: 1.0, 
-                    zIndex: 1
+                    xAnchor: 0.5, // 핀의 가로 정중앙
+                    yAnchor: 1.0, // 핀의 바닥(끝점) 기준으로 이펙트 발산
+                    zIndex: 1 // 핀보다 위에 살짝 얹어서 잘 보이도록 설정
                 });
 
+                // 3초 후 번쩍임 효과 자동 제거
                 setTimeout(() => {
                     if (highlightOverlay) { highlightOverlay.setMap(null); }
                 }, 3000);
