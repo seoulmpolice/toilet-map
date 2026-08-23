@@ -45,14 +45,14 @@
             overflow: hidden;
         }
         .brand-text .title-ko {
-            font-size: 11.5px; /* 모바일 화면에 맞춰 글자 크기 축소 */
-            font-weight: 900;
+            font-size: 13px; /* 글자 크기 한 단계 키움 */
+            font-weight: 900; /* 더 진하게 강조 */
             color: #12519b; 
             white-space: nowrap;
             line-height: 1.1;
         }
         .brand-text .title-en {
-            font-size: 7px; /* 영문도 비율에 맞게 축소 */
+            font-size: 7px;
             font-weight: 600;
             color: #666666; 
             white-space: nowrap;
@@ -232,7 +232,7 @@
 
     <div id="map"></div>
     
-    <!-- 상단 고정 바 (모바일 컴팩트 한 줄 배치) -->
+    <!-- 상단 고정 바 (로고 박스 + 검색 박스 한 줄 나란히 배치) -->
     <div id="top-bar">
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
@@ -242,7 +242,7 @@
             </div>
         </div>
         <div id="search-box">
-            <input type="text" id="searchInput" placeholder="근무장소/화장실 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
+            <input type="text" id="searchInput" placeholder="근무장소/화장실" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
             <button id="btn-search" onclick="searchToilet()">검색</button>
         </div>
     </div>
