@@ -267,7 +267,7 @@
             checkLoginStatus(); 
         };
 
-        // ★ 변경된 부분: 내 위치 누르면 커스텀 '기동대 전용 방패 SVG 마커' 생성
+        // ★ 변경된 부분: 바탕과 원을 없애고 방패 아이콘만 표시되도록 수정
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -277,10 +277,10 @@
 
                     if(myLocMarker) { myLocMarker.setMap(null); }
 
-                    // 이미지 호스팅 필요 없는 고화질 인라인 SVG 코드
+                    // 배경 원 없이 drop-shadow 필터만 적용하여 방패만 깔끔하게 노출
                     let content = `
-                    <div style="background: white; border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 3px solid #003478;">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38">
+                    <div style="display: flex; align-items: center; justify-content: center; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48">
                             <path d="M32 2 L6 10 V30 C6 46 17 57 32 62 C47 57 58 46 58 30 V10 Z" fill="#003478" />
                             <path d="M32 6 L10 13 V30 C10 44 19 53 32 58 C45 53 54 44 54 30 V13 Z" fill="none" stroke="#ffffff" stroke-width="1.5"/>
                             <text x="32" y="34" font-size="16" fill="#FFD700" font-weight="900" text-anchor="middle" font-family="'Malgun Gothic', sans-serif">기동대</text>
