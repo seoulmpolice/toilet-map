@@ -8,7 +8,7 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
-        /* 상단 고정 바 (모바일 한 줄 배치에 최적화된 컴팩트 사이즈) */
+        /* 상단 고정 바 (모바일 한 줄 배치 최적화) */
         #top-bar {
             position: fixed;
             top: 10px;
@@ -45,7 +45,7 @@
             overflow: hidden;
         }
         .brand-text .title-ko {
-            font-size: 13px; /* 글자 크기 한 단계 키움 */
+            font-size: 14px; /* 글자 크기 한 단계 확대 */
             font-weight: 900; /* 더 진하게 강조 */
             color: #12519b; 
             white-space: nowrap;
@@ -73,7 +73,8 @@
         }
         #searchInput { 
             flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
-            border-radius: 6px; font-size: 12px; background: #f9f9f9; outline: none; min-width: 0;
+            border-radius: 6px; font-size: 13px; /* 글자 크기 한 단계 확대 */
+            background: #f9f9f9; outline: none; min-width: 0;
         }
         #searchInput:focus { border-color: #003478; background: white; }
         #btn-search { 
@@ -237,7 +238,7 @@
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
             <div class="brand-text">
-                <div class="title-ko">서울시경찰청 5기동단</div>
+                <div class="title-ko">서울시 경찰청 5기동단</div>
                 <div class="title-en">SEOUL METROPOLITAN POLICE AGENCY</div>
             </div>
         </div>
