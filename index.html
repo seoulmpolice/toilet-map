@@ -8,7 +8,7 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
-        /* ★ 상단 고정 바 (아이폰 스크롤 시 밀림 방지를 위해 fixed 사용) */
+        /* 상단 고정 바 (아이폰 스크롤 밀림 방지 fixed) */
         #top-bar {
             position: fixed;
             top: 15px;
@@ -16,7 +16,7 @@
             right: 15px;
             z-index: 100;
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; 
             gap: 12px;
         }
         
@@ -82,7 +82,7 @@
             padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
         }
 
-        /* 좌측 하단 청결도 범례 (fixed 고정) */
+        /* 좌측 하단 청결도 범례 */
         #legend-box {
             position: fixed;
             bottom: 95px;
@@ -104,13 +104,13 @@
         .legend-color {
             width: 14px;
             height: 14px;
-            border-radius: 4px;
+            border-radius: 50%; 
             background: white;
             display: inline-block;
             box-sizing: border-box;
         }
 
-        /* 우측 하단 검색 결과 표 컨테이너 (fixed 고정) */
+        /* 우측 하단 검색 결과 표 컨테이너 */
         #search-result-box {
             position: fixed;
             bottom: 95px;
@@ -120,7 +120,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             max-height: 250px;
-            width: 180px; 
+            width: 190px; 
             overflow-y: auto;
             display: none; 
             border: 2px solid #003478;
@@ -142,7 +142,7 @@
         .res-workplace { font-weight: bold; color: #003478; font-size: 13px; }
         .res-name { color: #555; }
 
-        /* ★ 하단 고정 버튼 바 (fixed로 화면 하단에 완벽 고정) */
+        /* 하단 고정 버튼 바 */
         #bottom-bar {
             position: fixed;
             bottom: 25px;
@@ -215,7 +215,7 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* 검색된 마커 강조 애니메이션 */
+        /* ★ 검색된 마커 강조 애니메이션 (청결도 테두리 유지 + 바깥쪽 형광 하늘색 빛남) */
         .highlight-glow {
             animation: glow-pulse 0.8s infinite alternate !important;
         }
@@ -231,7 +231,7 @@
 
     <div id="map"></div>
     
-    <!-- 상단 고정 바 (로고 + 검색창) -->
+    <!-- 상단 고정 바 (독립 박스 2개) -->
     <div id="top-bar">
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
@@ -351,9 +351,9 @@
         let loggedInUser = null;
         let registerMarker = null; 
         let myLocMarker = null; 
-        let highlightOverlay = null; 
         let isRegisterMode = false;
         let geocoder; 
+        
         let markers = []; 
         let allToiletsData = []; 
 
@@ -416,7 +416,7 @@
                         yAnchor: 1 
                     });
                 }, function(error) {
-                    alert("위치 정보를 가져올 수 없습니다. 스마트폰의 위치(GPS) 설정을 켜주세요.");
+                    alert("위치 정보를 가져올 수 없습니다.");
                 }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
             } else {
                 alert("GPS를 지원하지 않는 기기입니다.");
@@ -433,7 +433,6 @@
                 allToiletsData = dataArray; 
                 renderMarkers(dataArray);
             } catch(e) { 
-                console.log("정적 파일 로드 실패, 실시간 API로 대체:", e);
                 fetchLiveData();
             }
         }
@@ -454,7 +453,7 @@
         }
 
         function renderMarkers(dataArray) {
-            markers.forEach(m => m.setMap(null));
+            markers.forEach(m => m.overlay.setMap(null));
             markers = [];
 
             if(!dataArray || !Array.isArray(dataArray)) return;
@@ -467,22 +466,16 @@
             dataArray.forEach(t => {
                 let cleanlinessText = t.cleanliness || '중';
                 let borderColor = '#ff9800'; 
-                let shadowStyle = 'box-shadow: 0 3px 5px rgba(0,0,0,0.3);';
+                let shadowStyle = 'box-shadow: 0 3px 6px rgba(0,0,0,0.3);';
                 
-                let iconSize = '28px'; 
-                let fontSize = '18px';
+                let iconSize = '36px'; 
+                let fontSize = '20px';
 
-                if (cleanlinessText === '상') {
-                    borderColor = '#2e7d32'; 
-                    shadowStyle = 'box-shadow: 0 0 8px 2px rgba(46, 125, 50, 0.4);'; 
-                    iconSize = '32px'; 
-                    fontSize = '20px';
-                } else if (cleanlinessText === '하') {
-                    borderColor = '#d32f2f'; 
-                }
+                if (cleanlinessText === '상') { borderColor = '#2e7d32'; } 
+                else if (cleanlinessText === '하') { borderColor = '#d32f2f'; }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 6px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
                 content.innerHTML = '🚻';
                 content.onclick = function() { showToiletInfo(t); };
 
@@ -490,58 +483,83 @@
                     map: map, 
                     position: new kakao.maps.LatLng(t.lat, t.lng),
                     content: content,
-                    yAnchor: 1
+                    yAnchor: 1,
+                    zIndex: 0
                 });
                 
-                markers.push(marker);
+                markers.push({ overlay: marker, contentDiv: content, data: t });
             });
         }
 
+        // 검색 시 표 형태 리스트 출력 및 마커 외곽선 형광 하늘색 빛남 효과 적용
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
-            
-            if (!keyword) {
-                alert("검색어를 입력해주세요.");
-                return;
-            }
+            if (!keyword) { alert("검색어를 입력해주세요."); return; }
+            if (!allToiletsData || allToiletsData.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
 
-            if (!allToiletsData || allToiletsData.length === 0) {
-                alert("아직 데이터를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-                return;
-            }
+            markers.forEach(m => {
+                m.contentDiv.classList.remove('highlight-glow');
+                m.overlay.setZIndex(0);
+            });
 
-            let found = allToiletsData.find(t => 
+            let foundToilets = allToiletsData.filter(t => 
                 (t.name && t.name.toLowerCase().includes(keyword.toLowerCase())) || 
                 (t.workplace && t.workplace.toLowerCase().includes(keyword.toLowerCase()))
             );
 
-            if (found) {
-                let targetLoc = new kakao.maps.LatLng(found.lat, found.lng);
-                
-                map.setCenter(targetLoc); 
-                map.setLevel(3);    
-                
-                showToiletInfo(found); 
+            let resultBox = document.getElementById('search-result-box');
 
-                if (highlightOverlay) { highlightOverlay.setMap(null); } 
+            if (foundToilets.length > 0) {
+                let tableHtml = `<div class="result-header">
+                    <span>검색 결과 (${foundToilets.length})</span>
+                    <span class="result-close" onclick="document.getElementById('search-result-box').style.display='none'">✖</span>
+                </div>`;
                 
-                let highlightContent = '<div class="pulse-marker"></div>';
-                highlightOverlay = new kakao.maps.CustomOverlay({
-                    map: map,
-                    position: targetLoc,
-                    content: highlightContent,
-                    xAnchor: 0.5,
-                    yAnchor: 1.0, 
-                    zIndex: 1
+                tableHtml += `<table><tbody>`;
+                let bounds = new kakao.maps.LatLngBounds();
+
+                foundToilets.forEach(ft => {
+                    bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    let index = allToiletsData.indexOf(ft); 
+                    
+                    let matchedMarker = markers.find(m => m.data === ft);
+                    if(matchedMarker) {
+                        matchedMarker.contentDiv.classList.add('highlight-glow');
+                        matchedMarker.overlay.setZIndex(10);
+                    }
+                    
+                    tableHtml += `<tr onclick='focusOnToilet(${index})'>
+                        <td>
+                            <div class="res-workplace">${ft.workplace || '근무지 미지정'}</div>
+                            <div class="res-name">${ft.name}</div>
+                        </td>
+                    </tr>`;
                 });
+                
+                tableHtml += `</tbody></table>`;
+                resultBox.innerHTML = tableHtml;
+                resultBox.style.display = 'block';
 
-                setTimeout(() => {
-                    if (highlightOverlay) { highlightOverlay.setMap(null); }
-                }, 3000);
+                if (foundToilets.length === 1) {
+                    map.setCenter(new kakao.maps.LatLng(foundToilets[0].lat, foundToilets[0].lng));
+                    map.setLevel(3); 
+                } else {
+                    map.setBounds(bounds);
+                }
 
+                document.getElementById('infoModal').style.display = 'none'; 
             } else {
                 alert("일치하는 화장실이나 근무장소가 없습니다.");
+                resultBox.style.display = 'none';
             }
+        }
+
+        function focusOnToilet(index) {
+            let data = allToiletsData[index];
+            let targetLoc = new kakao.maps.LatLng(data.lat, data.lng);
+            map.setCenter(targetLoc);
+            map.setLevel(3);
+            showToiletInfo(data);
         }
 
         function showToiletInfo(data) {
@@ -589,16 +607,12 @@
             document.getElementById('zoomImage').src = src;
             document.getElementById('imageZoomModal').style.display = 'flex'; 
         }
-        
         function closeZoom() {
             document.getElementById('imageZoomModal').style.display = 'none';
         }
 
         function fetchAddressFromMarker() {
-            if (!registerMarker) {
-                alert("지정된 핀이 없습니다.");
-                return;
-            }
+            if (!registerMarker) return alert("지정된 핀이 없습니다.");
             let loc = registerMarker.getPosition();
             
             geocoder.coord2Address(loc.getLng(), loc.getLat(), function(result, status) {
@@ -653,7 +667,6 @@
                     body: JSON.stringify({ action: 'login', id: id, pw: pw }),
                     redirect: 'follow'
                 });
-                
                 let result = await response.json();
                 if(result.success) {
                     alert(`${result.name}님 환영합니다.`);
@@ -662,10 +675,7 @@
                 } else {
                     alert(result.message);
                 }
-            } catch(e) { 
-                console.error(e);
-                alert("통신 오류가 발생했습니다."); 
-            }
+            } catch(e) { alert("통신 오류가 발생했습니다."); }
             btn.innerText = "로그인";
         }
 
@@ -677,34 +687,20 @@
                     const img = new Image();
                     img.src = event.target.result;
                     img.onload = function() {
-                        const MAX_WIDTH = 800; 
-                        const MAX_HEIGHT = 800; 
-                        let width = img.width;
-                        let height = img.height;
-
+                        const MAX_WIDTH = 800; const MAX_HEIGHT = 800; 
+                        let width = img.width; let height = img.height;
                         if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height = Math.round(height * (MAX_WIDTH / width));
-                                width = MAX_WIDTH;
-                            }
+                            if (width > MAX_WIDTH) { height = Math.round(height * (MAX_WIDTH / width)); width = MAX_WIDTH; }
                         } else {
-                            if (height > MAX_HEIGHT) {
-                                width = Math.round(width * (MAX_HEIGHT / height));
-                                height = MAX_HEIGHT;
-                            }
+                            if (height > MAX_HEIGHT) { width = Math.round(width * (MAX_HEIGHT / height)); height = MAX_HEIGHT; }
                         }
-
                         const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
-                        
                         ctx.fillStyle = "#ffffff";
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        resolve(dataUrl);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
                     };
                     img.onerror = error => reject(error);
                 };
@@ -729,7 +725,6 @@
             let files = [];
             let file1 = document.getElementById('regImage1').files[0];
             let file2 = document.getElementById('regImage2').files[0];
-            
             if (file1) files.push(file1);
             if (file2) files.push(file2);
             
@@ -740,42 +735,27 @@
             }
 
             let payload = {
-                action: 'register', 
-                userId: loggedInUser, 
-                workplace: workplace, 
-                name: name, 
+                action: 'register', userId: loggedInUser, workplace: workplace, name: name, 
                 address: document.getElementById('regAddress').value,
-                lat: position.getLat(), 
-                lng: position.getLng(), 
-                type: document.getElementById('regType').value,
-                cleanliness: cleanliness,
-                password: document.getElementById('regPassword').value, 
-                hours: document.getElementById('regHours').value,
-                bidet: document.getElementById('regBidet').value, 
-                toiletCnt: document.getElementById('regToilet').value,
-                urinalCnt: document.getElementById('regUrinal').value, 
+                lat: position.getLat(), lng: position.getLng(), type: document.getElementById('regType').value,
+                cleanliness: cleanliness, password: document.getElementById('regPassword').value, 
+                hours: document.getElementById('regHours').value, bidet: document.getElementById('regBidet').value, 
+                toiletCnt: document.getElementById('regToilet').value, urinalCnt: document.getElementById('regUrinal').value, 
                 images: base64Images
             };
 
             try {
                 let response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
-                    redirect: 'follow'
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload), redirect: 'follow'
                 });
                 let result = await response.json();
                 if(result.success) {
                     alert("성공적으로 등록되었습니다!");
                     document.getElementById('registerModal').style.display = 'none';
                     window.location.reload(); 
-                } else {
-                    alert("오류: " + result.message);
-                }
-            } catch(e) { 
-                console.error(e);
-                alert("등록 실패. 다시 시도해주세요."); 
-            }
+                } else { alert("오류: " + result.message); }
+            } catch(e) { alert("등록 실패. 다시 시도해주세요."); }
             
             btn.innerText = "완료 및 등록하기";
             btn.disabled = false;
