@@ -8,7 +8,7 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
-        /* 상단 고정 바 (로고 박스 + 넓어진 검색 박스) */
+        /* 상단 고정 바 (두 박스의 크기와 비율을 동일하게 맞춤) */
         #top-bar {
             position: fixed;
             top: 10px;
@@ -20,21 +20,23 @@
             gap: 6px;
         }
         
-        /* 1. 로고 및 텍스트 박스 (글자에 맞춰 컴팩트하게 축소) */
+        /* 1. 로고 및 텍스트 박스 (검색 박스와 동일한 크기 기준 적용) */
         #brand-box {
-            flex: 1.0;
+            flex: 1;
+            height: 38px;
             background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
+            padding: 0 8px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 5px;
+            box-sizing: border-box;
             overflow: hidden;
         }
         #brand-box img {
-            height: 26px;
+            height: 24px;
             width: auto;
             flex-shrink: 0;
         }
@@ -45,8 +47,8 @@
             overflow: hidden;
         }
         .brand-text .title-ko {
-            font-size: 13.5px; /* 글자 크기 키움 */
-            font-weight: 900; /* 더욱 진하게 강조 */
+            font-size: 13.5px; 
+            font-weight: 900; /* 진하게 강조 */
             color: #12519b; 
             white-space: nowrap;
             line-height: 1.1;
@@ -60,25 +62,27 @@
             margin-top: 2px;
         }
 
-        /* 2. 검색창 박스 (검색창 공간을 더 넓게 확보) */
+        /* 2. 검색창 박스 (기준 박스) */
         #search-box {
-            flex: 1.5;
+            flex: 1;
+            height: 38px;
             background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
+            padding: 0 8px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             gap: 4px;
+            box-sizing: border-box;
         }
         #searchInput { 
-            flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
-            border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0;
+            flex: 1; margin: 0; padding: 6px 8px; border: 1px solid #ddd; 
+            border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0; box-sizing: border-box;
         }
         #searchInput:focus { border-color: #003478; background: white; }
         #btn-search { 
             width: auto; background: #003478; color: white; border: none; 
-            padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap;
+            padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; box-sizing: border-box;
         }
 
         /* 좌측 하단 청결도 범례 */
@@ -167,14 +171,14 @@
             gap: 4px;
             white-space: nowrap;
         }
-        #btn-myloc { background: #2e7d32; color: white; } /* 내 위치 (녹색) */
-        #btn-admin { background: #003478; color: white; } /* 관리자 등록 (파란색) */
-        #btn-report { background: #555555; color: white; } /* 제보/문의 (회색) */
+        #btn-myloc { background: #2e7d32; color: white; } 
+        #btn-admin { background: #003478; color: white; } 
+        #btn-report { background: #555555; color: white; } 
 
         /* 관리자 로그인 후 우측 상단 기능 버튼들 */
         #admin-panel {
             position: fixed;
-            top: 70px; 
+            top: 60px; 
             right: 10px;
             z-index: 100;
             display: flex;
@@ -216,7 +220,7 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* 검색된 마커 강조 애니메이션 (청결도 테두리 유지 + 형광 하늘색 빛남) */
+        /* 검색된 마커 강조 애니메이션 */
         .highlight-glow {
             animation: glow-pulse 0.8s infinite alternate !important;
         }
@@ -232,7 +236,7 @@
 
     <div id="map"></div>
     
-    <!-- 상단 고정 바 (로고 박스 + 넓어진 검색 박스) -->
+    <!-- 상단 고정 바 (동일 크기로 맞춘 상단 박스들) -->
     <div id="top-bar">
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
@@ -264,7 +268,7 @@
     <!-- 우측 하단 검색 결과 표 -->
     <div id="search-result-box"></div>
 
-    <!-- 하단 고정 버튼 바 (내 위치 / 관리자 등록 / 제보·문의 3분할) -->
+    <!-- 하단 고정 버튼 바 -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
         <button id="btn-admin" onclick="handleAdminButtonClick()">➕ 관리자 등록</button>
@@ -468,16 +472,20 @@
             dataArray.forEach(t => {
                 let cleanlinessText = t.cleanliness || '중';
                 let borderColor = '#ff9800'; 
-                let shadowStyle = 'box-shadow: 0 3px 6px rgba(0,0,0,0.3);';
+                let shadowStyle = 'box-shadow: 0 3px 5px rgba(0,0,0,0.3);';
                 
-                let iconSize = '36px'; 
-                let fontSize = '20px';
+                let iconSize = '28px'; 
+                let fontSize = '18px';
 
-                if (cleanlinessText === '상') { borderColor = '#2e7d32'; } 
+                if (cleanlinessText === '상') { 
+                    borderColor = '#2e7d32'; 
+                    iconSize = '32px';
+                    fontSize = '20px';
+                } 
                 else if (cleanlinessText === '하') { borderColor = '#d32f2f'; }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 6px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
                 content.innerHTML = '🚻';
                 content.onclick = function() { showToiletInfo(t); };
 
