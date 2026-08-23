@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>서울경찰 기동대 화장실 지도</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
-        /* ★ 투명한 상단 컨테이너 (두 개의 독립 박스를 묶어줌) */
+        /* ★ 상단 고정 바 (아이폰 스크롤 시 밀림 방지를 위해 fixed 사용) */
         #top-bar {
-            position: absolute;
+            position: fixed;
             top: 15px;
             left: 15px;
             right: 15px;
-            z-index: 10;
+            z-index: 100;
             display: flex;
-            flex-wrap: wrap; /* 화면이 좁으면 검색창이 자연스럽게 아래 박스로 이동 */
+            flex-wrap: wrap;
             gap: 12px;
         }
         
-        /* 1. 로고 및 텍스트 독립 박스 (중앙 정렬 추가) */
+        /* 1. 로고 및 텍스트 독립 박스 */
         #brand-box {
             flex: 1;
             min-width: 270px;
@@ -30,7 +30,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            justify-content: center; /* ★ 박스 내부 중앙 정렬 */
+            justify-content: center;
             gap: 12px;
         }
         #brand-box img {
@@ -43,10 +43,10 @@
             justify-content: center;
         }
         .brand-text .title-ko {
-            font-size: 18px; /* ★ 글자 크기 1단계 확대 */
+            font-size: 18px;
             font-weight: 900;
             color: #12519b; 
-            letter-spacing: 0.5px; /* ★ 자간 넓힘 */
+            letter-spacing: 0.5px;
             white-space: nowrap;
             line-height: 1.1;
         }
@@ -82,12 +82,12 @@
             padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
         }
 
-        /* 좌측 하단 청결도 범례 */
+        /* 좌측 하단 청결도 범례 (fixed 고정) */
         #legend-box {
-            position: absolute;
+            position: fixed;
             bottom: 95px;
             left: 15px;
-            z-index: 10;
+            z-index: 100;
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 12px;
             border-radius: 10px;
@@ -104,18 +104,18 @@
         .legend-color {
             width: 14px;
             height: 14px;
-            border-radius: 50%; 
+            border-radius: 4px;
             background: white;
             display: inline-block;
             box-sizing: border-box;
         }
 
-        /* 우측 하단 검색 결과 표 컨테이너 */
+        /* 우측 하단 검색 결과 표 컨테이너 (fixed 고정) */
         #search-result-box {
-            position: absolute;
+            position: fixed;
             bottom: 95px;
             right: 15px;
-            z-index: 10;
+            z-index: 100;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
@@ -128,7 +128,7 @@
         .result-header {
             display: flex; justify-content: space-between; align-items: center;
             background: #003478; color: white; padding: 8px 10px;
-            font-size: 13px; font-weight: bold; position: sticky; top: 0; z-index: 11;
+            font-size: 13px; font-weight: bold; position: sticky; top: 0; z-index: 101;
         }
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 16px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
@@ -142,13 +142,13 @@
         .res-workplace { font-weight: bold; color: #003478; font-size: 13px; }
         .res-name { color: #555; }
 
-        /* 하단 고정 버튼 바 */
+        /* ★ 하단 고정 버튼 바 (fixed로 화면 하단에 완벽 고정) */
         #bottom-bar {
-            position: absolute;
-            bottom: 30px;
+            position: fixed;
+            bottom: 25px;
             left: 15px;
             right: 15px;
-            z-index: 10;
+            z-index: 100;
             display: flex;
             gap: 12px;
         }
@@ -172,10 +172,10 @@
 
         /* 관리자 로그인 후 우측 상단 기능 버튼들 */
         #admin-panel {
-            position: absolute;
-            top: 150px; 
+            position: fixed;
+            top: 140px; 
             right: 15px;
-            z-index: 10;
+            z-index: 100;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -188,7 +188,7 @@
         #btn-logout { color: #d32f2f; }
 
         /* 모달 및 폼 공통 스타일 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 20; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; }
         .modal-content { 
             background: white; width: 90%; max-width: 400px; margin: auto; position: relative; 
             top: 50%; transform: translateY(-50%); padding: 25px; border-radius: 16px; 
@@ -231,9 +231,8 @@
 
     <div id="map"></div>
     
-    <!-- ★ 두 개의 독립된 박스를 감싸는 투명한 상단 바 -->
+    <!-- 상단 고정 바 (로고 + 검색창) -->
     <div id="top-bar">
-        <!-- 1. 로고 및 텍스트 박스 -->
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
             <div class="brand-text">
@@ -241,7 +240,6 @@
                 <div class="title-en">SEOUL METROPOLITAN MOBILE POLICE AGENCY</div>
             </div>
         </div>
-        <!-- 2. 검색창 박스 -->
         <div id="search-box">
             <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
             <button id="btn-search" onclick="searchToilet()">검색</button>
@@ -256,18 +254,16 @@
 
     <!-- 좌측 하단 청결도 범례 -->
     <div id="legend-box">
-        <div class="legend-title">✨화장실 청결도</div> <!-- ★ 텍스트 수정 -->
+        <div class="legend-title">✨화장실 청결도</div>
         <div class="legend-item"><span class="legend-color" style="border: 3px solid #2e7d32;"></span> 상</div>
         <div class="legend-item"><span class="legend-color" style="border: 3px solid #ff9800;"></span> 중</div>
         <div class="legend-item"><span class="legend-color" style="border: 3px solid #d32f2f;"></span> 하</div>
     </div>
 
     <!-- 우측 하단 검색 결과 표 -->
-    <div id="search-result-box">
-        <!-- 자바스크립트로 결과 렌더링 -->
-    </div>
+    <div id="search-result-box"></div>
 
-    <!-- 하단 고정 UI 바 -->
+    <!-- 하단 고정 버튼 바 -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
         <button id="btn-admin" onclick="document.getElementById('loginModal').style.display='block'">➕ 화장실 등록</button>
@@ -394,7 +390,6 @@
             checkLoginStatus(); 
         };
 
-        // 내 위치 기동대 마커 (원 없이 방패만)
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -471,21 +466,23 @@
 
             dataArray.forEach(t => {
                 let cleanlinessText = t.cleanliness || '중';
-                let borderColor = '#ff9800'; // 기본 주황
+                let borderColor = '#ff9800'; 
                 let shadowStyle = 'box-shadow: 0 3px 5px rgba(0,0,0,0.3);';
                 
-                let iconSize = '36px'; 
-                let fontSize = '20px';
+                let iconSize = '28px'; 
+                let fontSize = '18px';
 
                 if (cleanlinessText === '상') {
-                    borderColor = '#2e7d32'; // 진초록
-                    shadowStyle = 'box-shadow: 0 0 8px 2px rgba(46, 125, 50, 0.4);'; // 빛 번짐 효과
+                    borderColor = '#2e7d32'; 
+                    shadowStyle = 'box-shadow: 0 0 8px 2px rgba(46, 125, 50, 0.4);'; 
+                    iconSize = '32px'; 
+                    fontSize = '20px';
                 } else if (cleanlinessText === '하') {
-                    borderColor = '#d32f2f'; // 빨강
+                    borderColor = '#d32f2f'; 
                 }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; cursor: pointer; padding: 0; margin: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 6px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0;`;
                 content.innerHTML = '🚻';
                 content.onclick = function() { showToiletInfo(t); };
 
