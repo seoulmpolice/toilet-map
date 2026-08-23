@@ -221,13 +221,13 @@
     </div>
 
     <script>
-        // 최신 Web App URL (이전 정상 작동 URL 유지)
+        // 최신 Web App URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFgfxRpK5dCatdEFaUs7TN2nBsfb34OLhLb7BfzgSQAnIDNvKAYFbRnXDEW50V_s55SQ/exec'; 
         
         let map;
         let loggedInUser = null;
         let registerMarker = null; 
-        let myLocMarker = null; // 내 위치 경찰관 마커
+        let myLocMarker = null; // 내 위치 마커
         let highlightOverlay = null; // 검색 번쩍이는 오버레이
         let isRegisterMode = false;
         let geocoder; 
@@ -267,7 +267,7 @@
             checkLoginStatus(); 
         };
 
-        // ★ 복구완료 1: 내 위치 누르면 👮 아이콘으로 표시되고 해당 위치로 이동
+        // ★ 변경된 부분: 내 위치 누르면 참수리 아이콘으로 표시되도록 수정
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -277,7 +277,8 @@
 
                     if(myLocMarker) { myLocMarker.setMap(null); }
 
-                    let content = '<div style="font-size: 35px; background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; line-height:1;">👮</div>';
+                    // 참수리 이미지 적용
+                    let content = '<div style="background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; overflow: hidden;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/National_Police_Agency_%28South_Korea%29_emblem.svg/120px-National_Police_Agency_%28South_Korea%29_emblem.svg.png" alt="참수리" style="width: 32px; height: 32px; object-fit: contain;"></div>';
                     
                     myLocMarker = new kakao.maps.CustomOverlay({
                         map: map,
@@ -323,7 +324,6 @@
             if(syncBtn) syncBtn.innerText = "🔄 데이터 실시간 업데이트";
         }
 
-        // ★ 복구완료 2: 화장실이 안 보이던 문제 해결 & 청결도에 따른 🚻 아이콘 색상 복구 (상=진초록, 중=주황, 하=빨강)
         function renderMarkers(dataArray) {
             markers.forEach(m => m.setMap(null));
             markers = [];
@@ -367,7 +367,6 @@
             });
         }
 
-        // ★ 복구완료 3: 검색 기능 고도화 및 번쩍이는 효과 복구
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
             
