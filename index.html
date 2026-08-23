@@ -8,55 +8,71 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; }
         #map { width: 100%; height: 100vh; }
         
-        /* ★ 상단 중앙 로고 및 제공자 문구 (크기 대폭 확대) */
-        #header-logo {
+        /* 상단 통합 바 (로고 + 텍스트 + 검색창) */
+        #top-header {
             position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 24px;
-            border-radius: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            white-space: nowrap;
-        }
-        #header-logo img {
-            height: 45px; /* 로고 크기를 확실하게 키움 */
-            width: auto;
-        }
-        #header-logo span {
-            font-size: 18px; /* 글자 크기도 로고에 맞춰 키움 */
-            font-weight: 900;
-            color: #003478;
-            letter-spacing: -0.5px;
-        }
-
-        /* 1. 최상단 검색창 (로고가 커진 만큼 더 아래로 배치) */
-        #search-box {
-            position: absolute;
-            top: 95px;
+            top: 15px;
             left: 15px;
             right: 15px;
             z-index: 10;
-            background: white;
-            padding: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex;
+            align-items: center;
+            flex-wrap: wrap; /* 화면이 좁을 때 자연스럽게 줄바꿈 */
+            gap: 15px;
+        }
+        
+        /* ★ 로고 및 두 줄 텍스트 영역 */
+        .header-brand {
+            display: flex;
+            align-items: center;
             gap: 10px;
         }
+        .header-brand img {
+            height: 38px; /* 두 줄 텍스트 높이에 맞게 살짝 조절 */
+            width: auto;
+        }
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .brand-text .title-ko {
+            font-size: 16px; 
+            font-weight: 900;
+            color: #12519b; /* 첨부된 이미지와 유사한 경찰 파란색 */
+            letter-spacing: -0.8px;
+            white-space: nowrap;
+            line-height: 1.1;
+        }
+        .brand-text .title-en {
+            font-size: 9px;
+            font-weight: 600;
+            color: #666666; /* 회색 영문 */
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+            line-height: 1.1;
+            margin-top: 3px;
+        }
+
+        /* 검색 입력 영역 */
+        #search-box-inner {
+            display: flex;
+            gap: 8px;
+            flex: 1; 
+            min-width: 220px; 
+        }
         #searchInput { 
-            flex: 1; margin: 0; padding: 12px 15px; border: 1px solid #ddd; 
-            border-radius: 8px; font-size: 15px; background: #f9f9f9; outline: none; 
+            flex: 1; margin: 0; padding: 10px 14px; border: 1px solid #ddd; 
+            border-radius: 8px; font-size: 14px; background: #f9f9f9; outline: none; 
         }
         #searchInput:focus { border-color: #003478; background: white; }
-        #search-box button { 
+        #btn-search { 
             width: auto; background: #003478; color: white; border: none; 
-            padding: 0 18px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; 
+            padding: 0 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
         }
 
         /* 좌측 하단 청결도 범례 */
@@ -147,10 +163,10 @@
         #btn-myloc { background: #2e7d32; color: white; }
         #btn-admin { background: #003478; color: white; }
 
-        /* 관리자 로그인 후 우측 상단 기능 버튼들 (로고/검색창 피해서 넉넉히 내림) */
+        /* 관리자 로그인 후 우측 상단 기능 버튼들 */
         #admin-panel {
             position: absolute;
-            top: 155px; 
+            top: 100px; 
             right: 15px;
             z-index: 10;
             display: flex;
@@ -192,7 +208,7 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* 검색된 마커 강조 애니메이션 (청결도 테두리 밖으로 빛남) */
+        /* 검색된 마커 강조 애니메이션 */
         .highlight-glow {
             animation: glow-pulse 0.8s infinite alternate !important;
         }
@@ -208,16 +224,19 @@
 
     <div id="map"></div>
     
-    <!-- ★ 최상단 로고 영역 -->
-    <div id="header-logo">
-        <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
-        <span>서울시경찰청 제5기동단 제공</span>
-    </div>
-
-    <!-- 키워드 검색창 -->
-    <div id="search-box">
-        <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
-        <button onclick="searchToilet()">검색</button>
+    <!-- ★ 새롭게 디자인된 상단 통합 바 (로고 + 두 줄 텍스트 + 검색창) -->
+    <div id="top-header">
+        <div class="header-brand">
+            <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
+            <div class="brand-text">
+                <div class="title-ko">서울시경찰청 기동본부 5기동단 제공</div>
+                <div class="title-en">SEOUL METROPOLITAN MOBILE POLICE AGENCY</div>
+            </div>
+        </div>
+        <div id="search-box-inner">
+            <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
+            <button id="btn-search" onclick="searchToilet()">검색</button>
+        </div>
     </div>
 
     <!-- 우측 상단 숨김 메뉴 -->
