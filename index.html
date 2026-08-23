@@ -8,102 +8,101 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
-        /* 상단 고정 바 (아이폰 스크롤 밀림 방지 fixed) */
+        /* ★ 상단 고정 바: 모바일 한 줄 배치를 위해 갭과 패딩 최소화 */
         #top-bar {
             position: fixed;
-            top: 15px;
-            left: 15px;
-            right: 15px;
+            top: 10px;
+            left: 10px;
+            right: 10px;
             z-index: 100;
             display: flex;
-            flex-wrap: wrap; 
-            gap: 12px;
+            align-items: center;
+            gap: 6px;
         }
         
-        /* 1. 로고 및 텍스트 독립 박스 */
+        /* 1. 로고 및 텍스트 박스 (컴팩트하게 조정) */
         #brand-box {
-            flex: 1;
-            min-width: 270px;
+            flex: 1.3;
             background: rgba(255, 255, 255, 0.95);
-            padding: 10px 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 6px 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 6px;
+            overflow: hidden;
         }
         #brand-box img {
-            height: 40px;
+            height: 28px;
             width: auto;
+            flex-shrink: 0;
         }
         .brand-text {
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden;
         }
         .brand-text .title-ko {
-            font-size: 18px;
+            font-size: 11.5px;
             font-weight: 900;
             color: #12519b; 
-            letter-spacing: 0.5px;
             white-space: nowrap;
             line-height: 1.1;
         }
         .brand-text .title-en {
-            font-size: 9px;
+            font-size: 7px;
             font-weight: 600;
             color: #666666; 
-            letter-spacing: 0.2px;
             white-space: nowrap;
             line-height: 1.1;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
-        /* 2. 검색창 독립 박스 */
+        /* 2. 검색창 박스 */
         #search-box {
             flex: 1;
-            min-width: 220px;
             background: rgba(255, 255, 255, 0.95);
-            padding: 8px 10px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 6px 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
         }
         #searchInput { 
-            flex: 1; margin: 0; padding: 10px 14px; border: 1px solid #ddd; 
-            border-radius: 8px; font-size: 14px; background: #f9f9f9; outline: none; 
+            flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
+            border-radius: 6px; font-size: 12px; background: #f9f9f9; outline: none; min-width: 0;
         }
         #searchInput:focus { border-color: #003478; background: white; }
         #btn-search { 
             width: auto; background: #003478; color: white; border: none; 
-            padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
+            padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap;
         }
 
         /* 좌측 하단 청결도 범례 */
         #legend-box {
             position: fixed;
-            bottom: 95px;
-            left: 15px;
+            bottom: 85px;
+            left: 10px;
             z-index: 100;
             background: rgba(255, 255, 255, 0.95);
-            padding: 8px 12px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-size: 12px;
             font-weight: bold;
             color: #333;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .legend-title { color: #003478; margin-right: 2px; }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-color {
-            width: 14px;
-            height: 14px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%; 
             background: white;
             display: inline-block;
@@ -113,76 +112,78 @@
         /* 우측 하단 검색 결과 표 컨테이너 */
         #search-result-box {
             position: fixed;
-            bottom: 95px;
-            right: 15px;
+            bottom: 85px;
+            right: 10px;
             z-index: 100;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
+            border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            max-height: 250px;
-            width: 190px; 
+            max-height: 220px;
+            width: 180px; 
             overflow-y: auto;
             display: none; 
             border: 2px solid #003478;
         }
         .result-header {
             display: flex; justify-content: space-between; align-items: center;
-            background: #003478; color: white; padding: 8px 10px;
-            font-size: 13px; font-weight: bold; position: sticky; top: 0; z-index: 101;
+            background: #003478; color: white; padding: 6px 8px;
+            font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101;
         }
-        .result-close { cursor: pointer; color: #ffeb3b; font-size: 16px; }
+        .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
         #search-result-box td {
-            padding: 8px 10px; border-bottom: 1px solid #ddd;
-            font-size: 12px; line-height: 1.4;
+            padding: 6px 8px; border-bottom: 1px solid #ddd;
+            font-size: 11px; line-height: 1.3;
         }
         #search-result-box tr { cursor: pointer; }
         #search-result-box tr:hover { background: #e3f2fd; }
         #search-result-box tr:last-child td { border-bottom: none; }
-        .res-workplace { font-weight: bold; color: #003478; font-size: 13px; }
+        .res-workplace { font-weight: bold; color: #003478; font-size: 12px; }
         .res-name { color: #555; }
 
-        /* 하단 고정 버튼 바 */
+        /* ★ 하단 고정 버튼 바 (3개 버튼 33%씩 균등 배치) */
         #bottom-bar {
             position: fixed;
-            bottom: 25px;
-            left: 15px;
-            right: 15px;
+            bottom: 20px;
+            left: 10px;
+            right: 10px;
             z-index: 100;
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
         #bottom-bar button {
             flex: 1; 
-            padding: 16px 10px;
-            border-radius: 12px;
+            padding: 14px 6px;
+            border-radius: 10px;
             border: none;
             font-weight: 800;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             cursor: pointer;
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            white-space: nowrap;
         }
-        #btn-myloc { background: #2e7d32; color: white; }
-        #btn-admin { background: #003478; color: white; }
+        #btn-myloc { background: #2e7d32; color: white; } /* 녹색 */
+        #btn-admin { background: #003478; color: white; } /* 관리자 등록 (파란색) */
+        #btn-report { background: #555555; color: white; } /* 제보/문의 (회색) */
 
         /* 관리자 로그인 후 우측 상단 기능 버튼들 */
         #admin-panel {
             position: fixed;
-            top: 140px; 
-            right: 15px;
+            top: 70px; 
+            right: 10px;
             z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
         #admin-panel button {
-            background: white; padding: 10px 14px; border-radius: 8px; border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 13px; cursor: pointer; display: none;
+            background: white; padding: 8px 12px; border-radius: 6px; border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none;
         }
         #btn-sync { color: #2e7d32; }
         #btn-logout { color: #d32f2f; }
@@ -215,7 +216,7 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* ★ 검색된 마커 강조 애니메이션 (청결도 테두리 유지 + 바깥쪽 형광 하늘색 빛남) */
+        /* 검색된 마커 강조 애니메이션 (청결도 테두리 유지 + 바깥쪽 형광 하늘색 빛남) */
         .highlight-glow {
             animation: glow-pulse 0.8s infinite alternate !important;
         }
@@ -231,7 +232,7 @@
 
     <div id="map"></div>
     
-    <!-- 상단 고정 바 (독립 박스 2개) -->
+    <!-- 상단 고정 바 (로고 박스 + 검색 박스 한 줄 나란히 배치) -->
     <div id="top-bar">
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
@@ -241,7 +242,7 @@
             </div>
         </div>
         <div id="search-box">
-            <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
+            <input type="text" id="searchInput" placeholder="근무장소/화장실 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
             <button id="btn-search" onclick="searchToilet()">검색</button>
         </div>
     </div>
@@ -263,10 +264,11 @@
     <!-- 우측 하단 검색 결과 표 -->
     <div id="search-result-box"></div>
 
-    <!-- 하단 고정 버튼 바 -->
+    <!-- 하단 고정 버튼 바 (내 위치 / 관리자 등록 / 제보·문의 3분할) -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
-        <button id="btn-admin" onclick="document.getElementById('loginModal').style.display='block'">➕ 화장실 등록</button>
+        <button id="btn-admin" onclick="handleAdminButtonClick()">➕ 관리자 등록</button>
+        <button id="btn-report" onclick="alert('제보 및 문의 기능은 준비 중입니다.')">💬 제보/문의</button>
     </div>
 
     <!-- 1. 로그인 모달 -->
@@ -491,7 +493,6 @@
             });
         }
 
-        // 검색 시 표 형태 리스트 출력 및 마커 외곽선 형광 하늘색 빛남 효과 적용
         function searchToilet() {
             let keyword = document.getElementById('searchInput').value.trim();
             if (!keyword) { alert("검색어를 입력해주세요."); return; }
@@ -626,6 +627,17 @@
             });
         }
 
+        // 하단 '관리자 등록' 버튼 클릭 시 로그인 여부에 따라 분기
+        function handleAdminButtonClick() {
+            if (!loggedInUser) {
+                document.getElementById('loginModal').style.display = 'block';
+            } else {
+                isRegisterMode = true;
+                if(registerMarker) registerMarker.setMap(null); 
+                alert("📍 지도 위에서 화장실이 위치한 곳을 '터치(클릭)' 하세요.");
+            }
+        }
+
         function setLoggedInUI(id) {
             loggedInUser = id;
             document.getElementById('loginModal').style.display = 'none';
@@ -634,12 +646,6 @@
             
             let adminBtn = document.getElementById('btn-admin');
             adminBtn.innerText = "➕ 새 화장실 등록";
-            
-            adminBtn.onclick = function() { 
-                isRegisterMode = true;
-                if(registerMarker) registerMarker.setMap(null); 
-                alert("📍 지도 위에서 화장실이 위치한 곳을 '터치(클릭)' 하세요.");
-            };
         }
 
         function checkLoginStatus() {
