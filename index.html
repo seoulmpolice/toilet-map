@@ -267,7 +267,7 @@
             checkLoginStatus(); 
         };
 
-        // ★ 변경된 부분: 내 위치 누르면 참수리 아이콘으로 표시되도록 수정
+        // ★ 변경된 부분: 내 위치 누르면 커스텀 '기동대 전용 방패 SVG 마커' 생성
         function moveToMyLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
@@ -277,8 +277,16 @@
 
                     if(myLocMarker) { myLocMarker.setMap(null); }
 
-                    // 참수리 이미지 적용
-                    let content = '<div style="background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; overflow: hidden;"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/National_Police_Agency_%28South_Korea%29_emblem.svg/120px-National_Police_Agency_%28South_Korea%29_emblem.svg.png" alt="참수리" style="width: 32px; height: 32px; object-fit: contain;"></div>';
+                    // 이미지 호스팅 필요 없는 고화질 인라인 SVG 코드
+                    let content = `
+                    <div style="background: white; border-radius: 50%; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.4); border: 3px solid #003478;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="38" height="38">
+                            <path d="M32 2 L6 10 V30 C6 46 17 57 32 62 C47 57 58 46 58 30 V10 Z" fill="#003478" />
+                            <path d="M32 6 L10 13 V30 C10 44 19 53 32 58 C45 53 54 44 54 30 V13 Z" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+                            <text x="32" y="34" font-size="16" fill="#FFD700" font-weight="900" text-anchor="middle" font-family="'Malgun Gothic', sans-serif">기동대</text>
+                            <text x="32" y="51" font-size="12" fill="#ffffff" font-weight="bold" text-anchor="middle" font-family="'Arial', sans-serif">POLICE</text>
+                        </svg>
+                    </div>`;
                     
                     myLocMarker = new kakao.maps.CustomOverlay({
                         map: map,
