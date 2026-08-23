@@ -8,31 +8,32 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; }
         #map { width: 100%; height: 100vh; }
         
-        /* 상단 통합 바 (로고 + 텍스트 + 검색창) */
-        #top-header {
+        /* ★ 투명한 상단 컨테이너 (두 개의 독립 박스를 묶어줌) */
+        #top-bar {
             position: absolute;
             top: 15px;
             left: 15px;
             right: 15px;
             z-index: 10;
+            display: flex;
+            flex-wrap: wrap; /* 화면이 좁으면 검색창이 자연스럽게 아래 박스로 이동 */
+            gap: 12px;
+        }
+        
+        /* 1. 로고 및 텍스트 독립 박스 */
+        #brand-box {
+            flex: 1;
+            min-width: 270px; /* 모바일에서 찌그러지지 않도록 최소 크기 고정 */
             background: rgba(255, 255, 255, 0.95);
             padding: 10px 15px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            flex-wrap: wrap; /* 화면이 좁을 때 자연스럽게 줄바꿈 */
-            gap: 15px;
-        }
-        
-        /* ★ 로고 및 두 줄 텍스트 영역 */
-        .header-brand {
-            display: flex;
-            align-items: center;
             gap: 10px;
         }
-        .header-brand img {
-            height: 38px; /* 두 줄 텍스트 높이에 맞게 살짝 조절 */
+        #brand-box img {
+            height: 38px;
             width: auto;
         }
         .brand-text {
@@ -43,7 +44,7 @@
         .brand-text .title-ko {
             font-size: 16px; 
             font-weight: 900;
-            color: #12519b; /* 첨부된 이미지와 유사한 경찰 파란색 */
+            color: #12519b; 
             letter-spacing: -0.8px;
             white-space: nowrap;
             line-height: 1.1;
@@ -51,19 +52,24 @@
         .brand-text .title-en {
             font-size: 9px;
             font-weight: 600;
-            color: #666666; /* 회색 영문 */
+            color: #666666; 
             letter-spacing: 0.2px;
             white-space: nowrap;
             line-height: 1.1;
             margin-top: 3px;
         }
 
-        /* 검색 입력 영역 */
-        #search-box-inner {
+        /* 2. 검색창 독립 박스 */
+        #search-box {
+            flex: 1;
+            min-width: 220px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             display: flex;
+            align-items: center;
             gap: 8px;
-            flex: 1; 
-            min-width: 220px; 
         }
         #searchInput { 
             flex: 1; margin: 0; padding: 10px 14px; border: 1px solid #ddd; 
@@ -72,7 +78,7 @@
         #searchInput:focus { border-color: #003478; background: white; }
         #btn-search { 
             width: auto; background: #003478; color: white; border: none; 
-            padding: 0 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
+            padding: 10px 16px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; white-space: nowrap;
         }
 
         /* 좌측 하단 청결도 범례 */
@@ -135,7 +141,7 @@
         .res-workplace { font-weight: bold; color: #003478; font-size: 13px; }
         .res-name { color: #555; }
 
-        /* 하단 고정 버튼 바 */
+        /* 하단 고정 버튼 바 (여기도 독립 박스들) */
         #bottom-bar {
             position: absolute;
             bottom: 30px;
@@ -166,7 +172,7 @@
         /* 관리자 로그인 후 우측 상단 기능 버튼들 */
         #admin-panel {
             position: absolute;
-            top: 100px; 
+            top: 150px; /* 로고와 검색창이 세로로 쌓일 경우를 대비해 여유 있게 내림 */
             right: 15px;
             z-index: 10;
             display: flex;
@@ -224,17 +230,19 @@
 
     <div id="map"></div>
     
-    <!-- ★ 새롭게 디자인된 상단 통합 바 (로고 + 두 줄 텍스트 + 검색창) -->
-    <div id="top-header">
-        <div class="header-brand">
+    <!-- ★ 두 개의 독립된 박스를 감싸는 투명한 상단 바 -->
+    <div id="top-bar">
+        <!-- 1. 로고 및 텍스트 박스 -->
+        <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
             <div class="brand-text">
                 <div class="title-ko">서울시경찰청 기동본부 5기동단 제공</div>
                 <div class="title-en">SEOUL METROPOLITAN MOBILE POLICE AGENCY</div>
             </div>
         </div>
-        <div id="search-box-inner">
-            <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 이름 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
+        <!-- 2. 검색창 박스 -->
+        <div id="search-box">
+            <input type="text" id="searchInput" placeholder="근무장소 또는 화장실 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchToilet()">
             <button id="btn-search" onclick="searchToilet()">검색</button>
         </div>
     </div>
@@ -258,7 +266,7 @@
         <!-- 자바스크립트로 결과 렌더링 -->
     </div>
 
-    <!-- 하단 고정 UI 바 -->
+    <!-- 하단 고정 UI 바 (여기도 독립 박스들) -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
         <button id="btn-admin" onclick="document.getElementById('loginModal').style.display='block'">➕ 화장실 등록</button>
