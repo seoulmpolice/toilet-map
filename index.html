@@ -8,7 +8,7 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; }
         #map { width: 100%; height: 100vh; }
         
-        /* 1. 최상단 검색창 (모바일 좌우 꽉 차게) */
+        /* 1. 최상단 검색창 */
         #search-box {
             position: absolute;
             top: 15px;
@@ -32,10 +32,10 @@
             padding: 0 18px; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; 
         }
 
-        /* ★ 좌측 하단 청결도 범례 스타일 */
+        /* ★ 좌측 하단 청결도 범례 스타일 (네모난 테두리 디자인으로 변경) */
         #legend-box {
             position: absolute;
-            bottom: 95px; /* 하단 고정 버튼 바 위쪽에 위치 */
+            bottom: 95px;
             left: 15px;
             z-index: 10;
             background: rgba(255, 255, 255, 0.95);
@@ -50,14 +50,13 @@
             gap: 10px;
         }
         .legend-title { color: #003478; margin-right: 2px; }
-        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
         .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            border-radius: 4px; /* 네모 모양 */
+            background: white;
             display: inline-block;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-            border: 1px solid #fff;
         }
 
         /* 2. 하단 고정 버튼 바 */
@@ -161,18 +160,18 @@
         <button onclick="searchToilet()">검색</button>
     </div>
 
-    <!-- 우측 상단 숨김 메뉴 (로그인 시 노출) -->
+    <!-- 우측 상단 숨김 메뉴 -->
     <div id="admin-panel">
         <button id="btn-sync" onclick="fetchLiveData()">🔄 데이터 실시간 업데이트</button>
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
-    <!-- ★ 좌측 하단 청결도 범례(Legend) -->
+    <!-- ★ 좌측 하단 청결도 범례 (네모/두꺼운 테두리 반영) -->
     <div id="legend-box">
         <div class="legend-title">✨청결도</div>
-        <div class="legend-item"><span class="legend-color" style="background:#2e7d32;"></span> 상</div>
-        <div class="legend-item"><span class="legend-color" style="background:#ff9800;"></span> 중</div>
-        <div class="legend-item"><span class="legend-color" style="background:#d32f2f;"></span> 하</div>
+        <div class="legend-item"><span class="legend-color" style="border: 3px solid #2e7d32;"></span> 상</div>
+        <div class="legend-item"><span class="legend-color" style="border: 3px solid #ff9800;"></span> 중</div>
+        <div class="legend-item"><span class="legend-color" style="border: 3px solid #d32f2f;"></span> 하</div>
     </div>
 
     <!-- 하단 고정 UI 바 -->
@@ -378,25 +377,25 @@
             if(dataList) dataList.innerHTML = combinedWorkplaces.map(wp => `<option value="${wp}">`).join('');
 
             dataArray.forEach(t => {
-                // ★ 청결도에 따라 원 배경을 채우고 아이콘이 꽉 차게 설정
+                // ★ 네모 모양과 두꺼운 테두리를 위한 스타일 설정
                 let cleanlinessText = t.cleanliness || '중';
-                let bgColor = '#ff9800'; // 기본 주황
-                let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
-                let iconSize = '34px'; // 원 크기를 살짝 더 키움
-                let fontSize = '24px'; // 아이콘이 원 안에 꽉 차도록 폰트 크기 확대
+                let borderColor = '#ff9800'; // 기본 주황
+                let shadowStyle = 'box-shadow: 0 4px 6px rgba(0,0,0,0.3);';
+                let iconSize = '32px'; 
+                let fontSize = '22px';
 
                 if (cleanlinessText === '상') {
-                    bgColor = '#2e7d32'; // 진초록
-                    shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.7);';
-                    iconSize = '38px'; // 상은 살짝 더 크게
-                    fontSize = '28px'; // 상 아이콘 확대
+                    borderColor = '#2e7d32'; // 진초록
+                    shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.5);'; // 상은 살짝 후광 효과
+                    iconSize = '36px'; // 상은 살짝 더 크게
+                    fontSize = '26px';
                 } else if (cleanlinessText === '하') {
-                    bgColor = '#d32f2f'; // 빨강
+                    borderColor = '#d32f2f'; // 빨강
                 }
 
                 let content = document.createElement('div');
-                // 얇은 흰색 테두리와 꽉 찬 이모지 크기 설정
-                content.style.cssText = `font-size: ${fontSize}; background: ${bgColor}; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 2px solid #ffffff; line-height: 1; cursor: pointer;`;
+                // 하얀색 바탕에 두꺼운 테두리(4px) 설정 및 둥근 네모(10px) 형태
+                content.style.cssText = `font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; line-height: 1; cursor: pointer;`;
                 content.innerHTML = '🚻';
                 content.onclick = function() { showToiletInfo(t); };
 
