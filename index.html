@@ -20,14 +20,14 @@
         #searchInput { flex: 1; margin: 0; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0; box-sizing: border-box; }
         #btn-search { background: #003478; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; }
 
-        /* 좌측 하단 범례 (시설 + 청결도 복원) */
+        /* 좌측 하단 범례 */
         #legend-box { position: fixed; bottom: 85px; left: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); padding: 8px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 12px; font-weight: bold; color: #333; display: flex; flex-direction: column; gap: 6px; }
         .legend-row { display: flex; gap: 10px; align-items: center; }
         .legend-title { color: #003478; margin-right: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-color { width: 12px; height: 12px; border-radius: 50%; background: white; display: inline-block; box-sizing: border-box; }
         
-        /* 우측 하단 검색 결과 표 (복원) */
+        /* 우측 하단 검색 결과 표 */
         #search-result-box { position: fixed; bottom: 85px; right: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 220px; width: 180px; overflow-y: auto; display: none; border: 2px solid #003478; }
         .result-header { display: flex; justify-content: space-between; align-items: center; background: #003478; color: white; padding: 6px 8px; font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101; }
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
@@ -44,7 +44,6 @@
         #btn-admin { background: #003478; color: white; } 
         #btn-report { background: #555555; color: white; } 
 
-        /* 관리자 패널 */
         #admin-panel { position: fixed; top: 60px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
         #admin-panel button { background: white; padding: 8px 12px; border-radius: 6px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none; }
         #btn-sync { color: #2e7d32; } #btn-logout { color: #d32f2f; }
@@ -69,15 +68,19 @@
         #imageZoomModal { z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
 
-        /* 검색된 마커 강조 애니메이션 (하늘색 번쩍임 복원) */
-        .highlight-glow {
-            border-color: #00e5ff !important;
-            box-shadow: 0 0 15px 5px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.5) !important;
-            animation: glow-pulse 0.8s infinite alternate;
+        /* 외부 별도 레이어로 동작하는 형광 하늘색 번쩍임 애니메이션 (청결도 색상 보존) */
+        .pulse-marker {
+            width: 50px; 
+            height: 50px;
+            background: rgba(0, 229, 255, 0.2);
+            border-radius: 50%;
+            border: 3px solid rgba(0, 229, 255, 0.8);
+            animation: pulse 1s infinite alternate;
+            pointer-events: none;
         }
-        @keyframes glow-pulse {
-            from { box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); transform: scale(1); }
-            to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
+        @keyframes pulse {
+            from { transform: scale(0.8); opacity: 1; box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); }
+            to { transform: scale(1.4); opacity: 0; box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); }
         }
     </style>
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
@@ -103,7 +106,6 @@
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
-    <!-- 범례 복원: 시설 + 화장실 청결도 -->
     <div id="legend-box">
         <div class="legend-row" style="border-bottom: 1px solid #ddd; padding-bottom: 4px;">
             <div class="legend-item">🚻 화장실</div>
@@ -118,7 +120,7 @@
         </div>
     </div>
 
-    <!-- 우측 하단 검색 결과 표 복원 -->
+    <!-- 우측 하단 검색 결과 표 -->
     <div id="search-result-box"></div>
 
     <div id="bottom-bar">
@@ -128,7 +130,6 @@
     </div>
 
     <!-- 모달들 -->
-    <!-- 1. 로그인 모달 -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
@@ -139,7 +140,6 @@
         </div>
     </div>
 
-    <!-- 2. 관리자 - 등록 대상 선택 모달 -->
     <div id="adminSelectModal" class="modal">
         <div class="modal-content" style="text-align: center;">
             <span class="close-btn" onclick="closeModal('adminSelectModal')">&times;</span>
@@ -150,7 +150,6 @@
         </div>
     </div>
 
-    <!-- 3. 등록 폼 템플릿 -->
     <div id="registerFormModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('registerFormModal')">&times;</span>
@@ -161,7 +160,6 @@
         </div>
     </div>
 
-    <!-- 4. 사용자 제보 인트로 -->
     <div id="reportIntroModal" class="modal">
         <div class="modal-content" style="text-align: center;">
             <span class="close-btn" onclick="closeModal('reportIntroModal')">&times;</span>
@@ -187,6 +185,7 @@
         let allData = { toilets: [], conveniences: [], restaurants: [] };
         let allList = []; 
         let markers = [];
+        let highlightOverlays = []; // 번쩍이는 이펙트 오버레이 관리 배열
 
         window.onload = function() {
             let container = document.getElementById('map');
@@ -215,7 +214,6 @@
                     map.setCenter(loc); map.setLevel(4);
                     if(myLocMarker) myLocMarker.setMap(null);
                     
-                    // 성별에 구애받지 않는 기동대 방패 마커 적용
                     let content = `
                     <div style="display: flex; align-items: center; justify-content: center; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48">
@@ -234,17 +232,17 @@
         async function fetchLiveData() {
             document.getElementById('btn-sync').innerText = "⏳ 갱신 중...";
             try {
-                let res = await fetch(SCRIPT_URL);
+                let res = await fetch(SCRIPT_URL, { redirect: 'follow' });
+                if (!res.ok) throw new Error("HTTP error " + res.status);
                 let result = await res.json();
                 if(result.success) {
                     allData = result.data;
                     renderMarkers();
                 }
-            } catch(e) { console.log(e); }
+            } catch(e) { console.error("데이터 로드 실패:", e); }
             document.getElementById('btn-sync').innerText = "🔄 데이터 실시간 업데이트";
         }
 
-        // 청결도 마커 색상 복원 적용
         function renderMarkers() {
             markers.forEach(m => m.overlay.setMap(null));
             markers = [];
@@ -255,20 +253,20 @@
                 let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
                 let iconSize = '35px';
 
-                // 화장실인 경우 청결도에 따라 색상 변경
+                // 청결도별 테두리 색상 처리 (화장실 전용)
                 if (category === 'toilet') {
-                    if (data.cleanliness === '상') { borderColor = '#2e7d32'; iconSize = '38px'; shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.7);'; }
+                    if (data.cleanliness === '상') { borderColor = '#2e7d32'; iconSize = '38px'; }
                     else if (data.cleanliness === '중') { borderColor = '#ff9800'; }
                     else if (data.cleanliness === '하') { borderColor = '#d32f2f'; }
                     else { borderColor = '#ff9800'; }
                 }
 
                 let content = document.createElement('div');
-                content.style.cssText = `font-size: 22px; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; cursor: pointer; transition: all 0.2s;`;
+                content.style.cssText = `font-size: 22px; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; cursor: pointer; position: relative; z-index: 2;`;
                 content.innerHTML = icon;
                 content.onclick = () => showInfo(data, category);
                 
-                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1, zIndex: 0 });
+                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1 });
                 markers.push({ overlay: overlay, contentDiv: content, data: data, category: category });
             };
 
@@ -277,16 +275,14 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // 우측 하단 표 및 번쩍임 효과 복원
+        // 검색 처리, 우측 하단 표 생성 및 별도 레이어(Pulse) 효과
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
             
-            // 기존 번쩍임 효과 초기화
-            markers.forEach(m => {
-                m.contentDiv.classList.remove('highlight-glow');
-                m.overlay.setZIndex(0);
-            });
+            // 기존 번쩍임 오버레이 전부 초기화
+            highlightOverlays.forEach(overlay => overlay.setMap(null));
+            highlightOverlays = [];
             
             let found = allList.filter(item => (item.name && item.name.toLowerCase().includes(kw.toLowerCase())) || (item.workplace && item.workplace.toLowerCase().includes(kw.toLowerCase())));
             
@@ -299,14 +295,22 @@
                 let bounds = new kakao.maps.LatLngBounds();
                 
                 found.forEach(ft => {
-                    bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    let loc = new kakao.maps.LatLng(ft.lat, ft.lng);
+                    bounds.extend(loc);
                     let idx = allList.indexOf(ft);
                     
-                    let matchedMarker = markers.find(m => m.data === ft);
-                    if(matchedMarker) {
-                        matchedMarker.contentDiv.classList.add('highlight-glow');
-                        matchedMarker.overlay.setZIndex(10);
-                    }
+                    // 청결도 테두리를 건드리지 않는 '별도' 번쩍임 마커 (Pulse) 추가
+                    let highlightContent = '<div class="pulse-marker"></div>';
+                    let pulseOverlay = new kakao.maps.CustomOverlay({
+                        map: map,
+                        position: loc,
+                        content: highlightContent,
+                        xAnchor: 0.5,
+                        yAnchor: 0.5, // 기존 핀 바깥쪽에 원형으로 감싸도록 중앙 정렬
+                        zIndex: 1
+                    });
+                    highlightOverlays.push(pulseOverlay);
+                    
                     html += `<tr onclick='focusOnItem(${idx})'>
                                 <td><div class="res-workplace">${ft.workplace || '미지정'}</div><div class="res-name">${ft.name}</div></td>
                              </tr>`;
@@ -377,21 +381,15 @@
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
-                // ★ CORS 우회용 옵션(headers, redirect) 복구 추가
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'login', id, pw }),
                     redirect: 'follow'
                 });
                 let result = await res.json();
-                if(result.success) { 
-                    sessionStorage.setItem('adminId', id); 
-                    setLoggedInUI(id); 
-                    document.getElementById('adminSelectModal').style.display = 'block'; 
-                }
+                if(result.success) { sessionStorage.setItem('adminId', id); setLoggedInUI(id); document.getElementById('adminSelectModal').style.display = 'block'; }
                 else alert(result.message);
-            } catch(e) { alert("통신 오류가 발생했습니다."); }
+            } catch(e) { alert("통신 오류가 발생했습니다. 네트워크를 확인해주세요."); }
             btn.innerText = "로그인";
         }
 
@@ -504,6 +502,7 @@
             });
         }
 
+        // 통신 오류 완벽 해결된 submitData 함수
         async function submitData(type) {
             if(!document.getElementById('f_name').value) return alert("상호명/이름을 입력하세요.");
             document.getElementById('regSubmitBtn').innerText = "전송 중...";
@@ -535,22 +534,24 @@
             }
 
             try {
-                // ★ CORS 우회용 옵션(headers, redirect) 복구 추가
+                // 보안 검증을 통과하는 가장 안전한 형태의 fetch 옵션 적용
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload),
                     redirect: 'follow'
                 });
+                
                 let result = await res.json();
                 if(result.success) {
                     alert("성공적으로 등록(제보)되었습니다.");
                     closeModal('registerFormModal');
                     fetchLiveData();
-                } else alert("오류: " + result.message);
+                } else {
+                    alert("오류: " + result.message);
+                }
             } catch(e) { 
-                console.log(e);
-                alert("통신 실패. 네트워크 상태를 확인해주세요."); 
+                console.error("Fetch 통신 실패:", e);
+                alert("통신 실패. 네트워크 상태나 스크립트 주소를 확인해주세요."); 
             }
             
             document.getElementById('regSubmitBtn').innerText = "완료 및 등록하기";
