@@ -20,16 +20,22 @@
         #searchInput { flex: 1; margin: 0; padding: 6px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0; box-sizing: border-box; }
         #btn-search { background: #003478; color: white; border: none; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; }
 
-        /* 좌측 하단 범례 */
-        #legend-box { position: fixed; bottom: 85px; left: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); padding: 6px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 12px; font-weight: bold; color: #333; display: flex; align-items: center; gap: 8px; }
+        /* 좌측 하단 범례 (시설 + 청결도 복원) */
+        #legend-box { position: fixed; bottom: 85px; left: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); padding: 8px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 12px; font-weight: bold; color: #333; display: flex; flex-direction: column; gap: 6px; }
+        .legend-row { display: flex; gap: 10px; align-items: center; }
+        .legend-title { color: #003478; margin-right: 2px; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; background: white; display: inline-block; box-sizing: border-box; }
         
-        /* 우측 하단 검색 결과 표 */
+        /* 우측 하단 검색 결과 표 (복원) */
         #search-result-box { position: fixed; bottom: 85px; right: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 220px; width: 180px; overflow-y: auto; display: none; border: 2px solid #003478; }
         .result-header { display: flex; justify-content: space-between; align-items: center; background: #003478; color: white; padding: 6px 8px; font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101; }
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
-        #search-result-box td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 11px; cursor: pointer;}
+        #search-result-box td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 11px; cursor: pointer; line-height: 1.3; }
         #search-result-box tr:hover { background: #e3f2fd; }
+        .res-workplace { font-weight: bold; color: #003478; font-size: 12px; }
+        .res-name { color: #555; }
 
         /* 하단 고정 버튼 바 */
         #bottom-bar { position: fixed; bottom: 20px; left: 10px; right: 10px; z-index: 100; display: flex; gap: 8px; }
@@ -59,8 +65,19 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
         
-        #imageZoomModal { z-index: 9999; display: none; align-items: center; justify-content: center; }
+        #imageZoomModal { z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
+
+        /* 검색된 마커 강조 애니메이션 (하늘색 번쩍임 복원) */
+        .highlight-glow {
+            border-color: #00e5ff !important;
+            box-shadow: 0 0 15px 5px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.5) !important;
+            animation: glow-pulse 0.8s infinite alternate;
+        }
+        @keyframes glow-pulse {
+            from { box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); transform: scale(1); }
+            to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
+        }
     </style>
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
@@ -85,10 +102,22 @@
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
+    <!-- 범례 복원: 시설 + 화장실 청결도 -->
     <div id="legend-box">
-        <div>🚻 화장실</div><div>🏪 편의점</div><div>🍽️ 식당</div>
+        <div class="legend-row" style="border-bottom: 1px solid #ddd; padding-bottom: 4px;">
+            <div class="legend-item">🚻 화장실</div>
+            <div class="legend-item">🏪 편의점</div>
+            <div class="legend-item">🍽️ 식당</div>
+        </div>
+        <div class="legend-row">
+            <div class="legend-title">✨화장실 청결도</div>
+            <div class="legend-item"><span class="legend-color" style="border: 3px solid #2e7d32;"></span> 상</div>
+            <div class="legend-item"><span class="legend-color" style="border: 3px solid #ff9800;"></span> 중</div>
+            <div class="legend-item"><span class="legend-color" style="border: 3px solid #d32f2f;"></span> 하</div>
+        </div>
     </div>
 
+    <!-- 우측 하단 검색 결과 표 복원 -->
     <div id="search-result-box"></div>
 
     <div id="bottom-bar">
@@ -97,6 +126,7 @@
         <button id="btn-report" onclick="openReportIntro()">💬 제보/문의</button>
     </div>
 
+    <!-- 모달들 -->
     <!-- 1. 로그인 모달 -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -119,7 +149,7 @@
         </div>
     </div>
 
-    <!-- 3. 관리자 - 폼 템플릿 영역 (JS로 동적 렌더링) -->
+    <!-- 3. 등록 폼 템플릿 -->
     <div id="registerFormModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('registerFormModal')">&times;</span>
@@ -142,9 +172,8 @@
         </div>
     </div>
 
-    <!-- 5. 상세정보/사진 모달 -->
     <div id="infoModal" class="modal"><div class="modal-content" id="infoContent"></div></div>
-    <div id="imageZoomModal" class="modal" onclick="document.getElementById('imageZoomModal').style.display='none'"><img id="zoomImage" src=""></div>
+    <div id="imageZoomModal" class="modal" onclick="closeModal('imageZoomModal')"><img id="zoomImage" src=""></div>
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxjnejkGZgM6FtZcTDu1AKsZOVHyRYNGyopX_4_NND9jtY6xL0kFE0E5kLYx9X5abhnw/exec'; 
@@ -152,9 +181,10 @@
         let map, geocoder;
         let loggedInUser = null;
         let registerMarker = null, myLocMarker = null;
-        let currentRegType = null; // 'toilet', 'convenience', 'restaurant', 'report_XXX'
+        let currentRegType = null;
         
         let allData = { toilets: [], conveniences: [], restaurants: [] };
+        let allList = []; // 검색을 위해 하나로 합친 배열
         let markers = [];
 
         window.onload = function() {
@@ -202,23 +232,95 @@
             document.getElementById('btn-sync').innerText = "🔄 데이터 실시간 업데이트";
         }
 
+        // 청결도 마커 색상 복원 적용
         function renderMarkers() {
             markers.forEach(m => m.overlay.setMap(null));
             markers = [];
+            allList = [...allData.toilets, ...allData.conveniences, ...allData.restaurants];
 
-            const createMarker = (data, icon, borderColor, callback) => {
+            const createMarker = (data, icon, defaultBorder, category) => {
+                let borderColor = defaultBorder;
+                let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
+                let iconSize = '35px';
+
+                // 화장실인 경우 청결도에 따라 색상 변경
+                if (category === 'toilet') {
+                    if (data.cleanliness === '상') { borderColor = '#2e7d32'; iconSize = '38px'; shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.7);'; }
+                    else if (data.cleanliness === '중') { borderColor = '#ff9800'; }
+                    else if (data.cleanliness === '하') { borderColor = '#d32f2f'; }
+                    else { borderColor = '#ff9800'; }
+                }
+
                 let content = document.createElement('div');
-                content.style.cssText = `font-size: 22px; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 3px solid ${borderColor}; cursor: pointer;`;
+                content.style.cssText = `font-size: 22px; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; cursor: pointer; transition: all 0.2s;`;
                 content.innerHTML = icon;
-                content.onclick = () => callback(data);
+                content.onclick = () => showInfo(data, category);
                 
-                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1 });
-                markers.push({ overlay: overlay, contentDiv: content, data: data });
+                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1, zIndex: 0 });
+                markers.push({ overlay: overlay, contentDiv: content, data: data, category: category });
             };
 
-            allData.toilets.forEach(t => createMarker(t, '🚻', '#1976d2', (d) => showInfo(d, 'toilet')));
-            allData.conveniences.forEach(c => createMarker(c, '🏪', '#0288d1', (d) => showInfo(d, 'convenience')));
-            allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', (d) => showInfo(d, 'restaurant')));
+            allData.toilets.forEach(t => createMarker(t, '🚻', '#ff9800', 'toilet'));
+            allData.conveniences.forEach(c => createMarker(c, '🏪', '#0288d1', 'convenience'));
+            allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
+        }
+
+        // 우측 하단 표 및 번쩍임 효과 복원
+        function searchFacility() {
+            let kw = document.getElementById('searchInput').value.trim();
+            if(!kw) return alert("검색어를 입력해주세요.");
+            
+            // 기존 번쩍임 효과 초기화
+            markers.forEach(m => {
+                m.contentDiv.classList.remove('highlight-glow');
+                m.overlay.setZIndex(0);
+            });
+            
+            let found = allList.filter(item => (item.name && item.name.toLowerCase().includes(kw.toLowerCase())) || (item.workplace && item.workplace.toLowerCase().includes(kw.toLowerCase())));
+            
+            let resultBox = document.getElementById('search-result-box');
+            if(found.length > 0) {
+                let html = `<div class="result-header">
+                    <span>검색 결과 (${found.length})</span>
+                    <span class="result-close" onclick="document.getElementById('search-result-box').style.display='none'">✖</span>
+                </div><table><tbody>`;
+                let bounds = new kakao.maps.LatLngBounds();
+                
+                found.forEach(ft => {
+                    bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    let idx = allList.indexOf(ft);
+                    
+                    let matchedMarker = markers.find(m => m.data === ft);
+                    if(matchedMarker) {
+                        matchedMarker.contentDiv.classList.add('highlight-glow');
+                        matchedMarker.overlay.setZIndex(10);
+                    }
+                    html += `<tr onclick='focusOnItem(${idx})'>
+                                <td><div class="res-workplace">${ft.workplace || '미지정'}</div><div class="res-name">${ft.name}</div></td>
+                             </tr>`;
+                });
+                html += `</tbody></table>`;
+                resultBox.innerHTML = html;
+                resultBox.style.display = 'block';
+                
+                if(found.length === 1) {
+                    map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
+                    map.setLevel(3);
+                } else {
+                    map.setBounds(bounds);
+                }
+                document.getElementById('infoModal').style.display = 'none';
+            } else {
+                alert("일치하는 결과가 없습니다.");
+                resultBox.style.display = 'none';
+            }
+        }
+        
+        function focusOnItem(index) {
+            let data = allList[index];
+            map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
+            map.setLevel(3);
+            showInfo(data, data.category);
         }
 
         function showInfo(data, type) {
@@ -231,7 +333,12 @@
             }
 
             let detailHtml = '';
-            if(type === 'toilet') detailHtml = `<div class="info-row">🚽 <b>시설:</b> ${data.bidet} / 대변기 ${data.toiletCnt||0} / 소변기 ${data.urinalCnt||0}</div>`;
+            if(type === 'toilet') {
+                let cleanlinessColor = data.cleanliness === '상' ? '#2e7d32' : (data.cleanliness === '하' ? '#d32f2f' : '#ff9800');
+                detailHtml = `<div class="info-row">✨ <b>청결도:</b> <span style="color:${cleanlinessColor}; font-weight:bold;">${data.cleanliness || '중'}</span></div>
+                              <div class="info-row">🔑 <b>비밀번호:</b> <span style="color:red; font-weight:bold;">${data.password || '개방'}</span></div>
+                              <div class="info-row">🚽 <b>시설:</b> ${data.bidet || '없음'} / 대변기 ${data.toiletCnt||0} / 소변기 ${data.urinalCnt||0}</div>`;
+            }
             else if(type === 'convenience') detailHtml = `<div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">🪑 <b>취식:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
             else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>종류:</b> ${data.mealType||'없음'}</div><div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체:</b> ${data.group||'없음'}</div>`;
 
@@ -240,7 +347,7 @@
                 <div class="info-title"><div style="font-size:13px; color:#666; font-weight:normal;">🏢 근무장소: ${data.workplace || '미지정'}</div>${data.name}</div>
                 <div class="badge ${badge}">${typeName}</div>
                 <div class="info-row">📍 <b>주소:</b> ${data.address || '정보없음'}</div>
-                <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
+                <div class="info-row">🕒 <b>시간:</b> ${data.hours || '정보없음'}</div>
                 ${detailHtml}${imgHtml}
             `;
             document.getElementById('infoContent').innerHTML = html;
@@ -252,30 +359,24 @@
             if(loggedInUser) document.getElementById('adminSelectModal').style.display = 'block';
             else document.getElementById('loginModal').style.display = 'block';
         }
-        
         async function login() {
-            let id = document.getElementById('adminId').value;
-            let pw = document.getElementById('adminPw').value;
+            let id = document.getElementById('adminId').value, pw = document.getElementById('adminPw').value;
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
                 let res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', id, pw }) });
                 let result = await res.json();
-                if(result.success) {
-                    sessionStorage.setItem('adminId', id); setLoggedInUI(id);
-                    document.getElementById('adminSelectModal').style.display = 'block';
-                } else alert(result.message);
+                if(result.success) { sessionStorage.setItem('adminId', id); setLoggedInUI(id); document.getElementById('adminSelectModal').style.display = 'block'; }
+                else alert(result.message);
             } catch(e) { alert("통신 오류"); }
             btn.innerText = "로그인";
         }
-        
         function setLoggedInUI(id) {
             loggedInUser = id;
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('btn-logout').style.display = 'block';
             document.getElementById('btn-sync').style.display = 'block';
         }
-
         function logout() { sessionStorage.removeItem('adminId'); window.location.reload(); }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openZoom(src) { document.getElementById('zoomImage').src = src; document.getElementById('imageZoomModal').style.display = 'flex'; }
@@ -287,7 +388,6 @@
             if(registerMarker) registerMarker.setMap(null);
             alert("📍 지도 위에서 해당 시설이 위치한 곳을 '터치(클릭)' 하세요.");
         }
-
         function openReportIntro() { document.getElementById('reportIntroModal').style.display = 'block'; }
         function openReportSelect() {
             closeModal('reportIntroModal');
@@ -314,7 +414,7 @@
         }
 
         function renderDynamicForm(type) {
-            currentRegType = null; // 모달을 띄우고 상태 해제
+            currentRegType = null; 
             let isReport = type.startsWith('report_');
             let facilityType = isReport ? type.split('_')[1] : type;
             
@@ -397,7 +497,6 @@
                 images: [await compressImage(document.getElementById('f_img1').files[0]), await compressImage(document.getElementById('f_img2').files[0])]
             };
 
-            // 필드 매핑
             if(type.startsWith('report_')) {
                 payload.facilityType = type.split('_')[1];
                 payload.reporter = document.getElementById('f_reporter').value || '익명';
