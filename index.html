@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>서울경찰 기동대 화장실 지도</title>
+    <title>서울경찰 기동대 통합 지도 서비스</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
@@ -45,14 +45,14 @@
             overflow: hidden;
         }
         .brand-text .title-ko {
-            font-size: 13px; /* 요청사항 반영: 13px */
-            font-weight: 900; /* 진하게 */
+            font-size: 13px; 
+            font-weight: 900; 
             color: #12519b; 
             white-space: nowrap;
             line-height: 1.1;
         }
         .brand-text .title-en {
-            font-size: 7px; /* 요청사항 반영: 영문 7px */
+            font-size: 7px; 
             font-weight: 600;
             color: #666666; 
             white-space: nowrap;
@@ -73,7 +73,7 @@
         }
         #searchInput { 
             flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
-            border-radius: 6px; font-size: 13px; /* 요청사항 반영: 검색어 글자크기 13px */
+            border-radius: 6px; font-size: 13px; 
             background: #f9f9f9; outline: none; min-width: 0;
         }
         #searchInput:focus { border-color: #003478; background: white; }
@@ -82,7 +82,7 @@
             padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap;
         }
 
-        /* ★ 좌측 하단 통합 범례 박스 (네모박스 크기 및 가운데 정렬 완료) */
+        /* 좌측 하단 통합 범례 박스 */
         #legend-box {
             position: fixed;
             bottom: 85px;
@@ -107,7 +107,6 @@
         .legend-title { color: #003478; margin-right: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         
-        /* 범례 아이콘/컬러 네모 박스 크기 및 완벽한 가운데 정렬 설정 */
         .legend-icon-box {
             width: 18px;
             height: 18px;
@@ -176,7 +175,7 @@
             border-radius: 10px;
             border: none;
             font-weight: 800;
-            font-size: 13px; /* 요청사항 반영: 하단 버튼 폰트크기 13px */
+            font-size: 13px; 
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             cursor: pointer;
             text-align: center;
@@ -224,7 +223,7 @@
         input:focus, select:focus { border-color: #003478; background: white; }
         .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
 
-        /* 화장실 상세 정보 모달 */
+        /* 상세 정보 모달 */
         #imageZoomModal { z-index: 9999; background: rgba(0,0,0,0.8); cursor: pointer; display: none; align-items: center; justify-content: center; }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
         .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
@@ -232,6 +231,8 @@
         .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 15px;}
         .badge-police { background: #d32f2f; }
         .badge-public { background: #1976d2; }
+        .badge-cv { background: #0288d1; }
+        .badge-rest { background: #388e3c; }
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
@@ -244,7 +245,7 @@
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
     </style>
-    <!-- 카카오맵 API -->
+    <!-- 카카오맵 API (앱 키 본인 것으로 유지 요망) -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
 <body>
@@ -254,14 +255,14 @@
     <!-- 상단 고정 바 -->
     <div id="top-bar">
         <div id="brand-box">
-            <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고">
+            <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고" onerror="this.style.display='none'">
             <div class="brand-text">
                 <div class="title-ko">서울경찰청 5기동단</div>
                 <div class="title-en">SEOUL METROPOLITAN POLICE AGENCY</div>
             </div>
         </div>
         <div id="search-box">
-            <input type="text" id="searchInput" placeholder="근무장소/화장실" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchFacility()">
+            <input type="text" id="searchInput" placeholder="근무장소/시설 검색" onkeypress="if(event.key === 'Enter' || event.keyCode === 13) searchFacility()">
             <button id="btn-search" onclick="searchFacility()">검색</button>
         </div>
     </div>
@@ -272,7 +273,7 @@
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
-    <!-- ★ 좌측 하단 범례 -->
+    <!-- 좌측 하단 범례 -->
     <div id="legend-box">
         <div class="legend-row">
             <div class="legend-item"><span class="legend-icon-box">🏪</span> 편의점</div>
@@ -297,7 +298,6 @@
         <button id="btn-report" onclick="openReportIntro()">💬 제보/문의</button>
     </div>
 
-    <!-- 모달들 -->
     <!-- 1. 로그인 모달 -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -348,7 +348,7 @@
     <div id="imageZoomModal" class="modal" onclick="closeModal('imageZoomModal')"><img id="zoomImage" src=""></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzFgfxRpK5dCatdEFaUs7TN2nBsfb34OLhLb7BfzgSQAnIDNvKAYFbRnXDEW50V_s55SQ/exec'; 
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDTe5IrmjMdD0IoURXiI2wMwsiPJhTlE_ppdUyqnK1kUDKQP8zHY6E2uGdtE3rN9HJXA/exec'; 
         
         let map, geocoder;
         let loggedInUser = null;
@@ -356,7 +356,7 @@
         let currentRegType = null;
         
         let allData = { toilets: [], conveniences: [], restaurants: [] };
-        let allList = []; // 검색을 위해 하나로 합친 배열
+        let allList = []; 
         let markers = [];
 
         window.onload = function() {
@@ -399,21 +399,17 @@
                     </div>`;
                     
                     myLocMarker = new kakao.maps.CustomOverlay({
-                        map: map,
-                        position: locPosition,
-                        content: content,
-                        yAnchor: 1 
+                        map: map, position: locPosition, content: content, yAnchor: 1 
                     });
                 }, function(error) {
                     alert("위치 정보를 가져올 수 없습니다.");
                 }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
-            } else {
-                alert("GPS를 지원하지 않는 기기입니다.");
             }
         }
 
         async function fetchLiveData() {
-            document.getElementById('btn-sync').innerText = "⏳ 갱신 중...";
+            let syncBtn = document.getElementById('btn-sync');
+            if(syncBtn) syncBtn.innerText = "⏳ 갱신 중...";
             try {
                 let res = await fetch(SCRIPT_URL, { redirect: 'follow' });
                 let result = await res.json();
@@ -422,10 +418,9 @@
                     renderMarkers();
                 }
             } catch(e) { console.log("데이터 로드 실패:", e); }
-            document.getElementById('btn-sync').innerText = "🔄 데이터 실시간 업데이트";
+            if(syncBtn) syncBtn.innerText = "🔄 데이터 실시간 업데이트";
         }
 
-        // 전체 카테고리(화장실, 편의점, 식당) 마커 렌더링
         function renderMarkers() {
             markers.forEach(m => m.overlay.setMap(null));
             markers = [];
@@ -435,17 +430,16 @@
                 let borderColor = defaultBorder;
                 let shadowStyle = 'box-shadow: 0 3px 6px rgba(0,0,0,0.3);';
                 let iconSize = '32px'; 
-                let fontSize = '22px';
+                let fontSize = '20px';
 
-                // 화장실은 청결도에 따라 색상 분기
                 if (category === 'toilet') {
                     if (data.cleanliness === '상') { borderColor = '#2e7d32'; } 
                     else if (data.cleanliness === '하') { borderColor = '#d32f2f'; }
-                    else { borderColor = '#ff9800'; } // 중
+                    else { borderColor = '#ff9800'; } 
                 }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
                 content.innerHTML = icon;
                 content.onclick = () => showInfo(data, category);
                 
@@ -453,18 +447,15 @@
                 markers.push({ overlay: overlay, contentDiv: content, data: data, category: category });
             };
 
-            // 데이터 타입별로 아이콘과 기본 테두리 색상을 다르게 지정하여 렌더링
             allData.toilets.forEach(t => createMarker(t, '🚻', '#ff9800', 'toilet'));
             allData.conveniences.forEach(c => createMarker(c, '🏪', '#0288d1', 'convenience'));
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // 검색 기능 (통합 검색 및 번쩍임 효과)
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
             
-            // 기존 번쩍임 효과 초기화
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
                 m.overlay.setZIndex(0);
@@ -517,7 +508,6 @@
             showInfo(data, data.category);
         }
 
-        // 마커 클릭 시 상세정보 표출
         function showInfo(data, type) {
             let badgeClass = type === 'toilet' ? (data.type && data.type.includes('경찰') ? 'badge-police' : 'badge-public') : (type === 'convenience' ? 'badge-cv' : 'badge-rest');
             let typeName = type === 'toilet' ? (data.type || '일반') : (type === 'convenience' ? '편의점' : '식당');
@@ -535,8 +525,8 @@
                               <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
                               <div class="info-row">🚽 <b>시설:</b> ${data.bidet || '정보없음'} / 대변기 ${data.toiletCnt||0}개 / 소변기 ${data.urinalCnt||0}개</div>`;
             }
-            else if(type === 'convenience') detailHtml = `<div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">💳 <b>제휴카드:</b> ${data.card||'없음'}</div><div class="info-row">🪑 <b>취식테이블:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
-            else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>식사종류:</b> ${data.mealType||'없음'}</div><div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'} (브레이크타임: ${data.breaktime||'없음'})</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체수용:</b> ${data.group||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
+            else if(type === 'convenience') detailHtml = `<div class="info-row">🕒 <b>영업시간:</b> ${data.hours || '정보없음'}</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">💳 <b>제휴카드:</b> ${data.card||'없음'}</div><div class="info-row">🪑 <b>취식테이블:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
+            else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>식사종류:</b> ${data.mealType||'없음'}</div><div class="info-row">🕒 <b>영업시간:</b> ${data.hours || '정보없음'} (브레이크타임: ${data.breaktime||'없음'})</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체수용:</b> ${data.group||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
 
             let html = `
                 <span class="close-btn" onclick="closeModal('infoModal')">&times;</span>
@@ -552,23 +542,29 @@
             document.getElementById('infoModal').style.display = 'block';
         }
 
-        // 로그인 & 관리자 플로우
         function checkAdminAccess() {
             if(loggedInUser) document.getElementById('adminSelectModal').style.display = 'block';
             else document.getElementById('loginModal').style.display = 'block';
         }
+
         async function login() {
             let id = document.getElementById('adminId').value, pw = document.getElementById('adminPw').value;
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
-                let res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'login', id, pw }), redirect: 'follow' });
+                let res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action: 'login', id, pw }), 
+                    redirect: 'follow' 
+                });
                 let result = await res.json();
                 if(result.success) { sessionStorage.setItem('adminId', id); setLoggedInUI(id); document.getElementById('adminSelectModal').style.display = 'block'; }
                 else alert(result.message);
             } catch(e) { alert("통신 오류가 발생했습니다."); }
             btn.innerText = "로그인";
         }
+
         function setLoggedInUI(id) {
             loggedInUser = id;
             document.getElementById('loginModal').style.display = 'none';
@@ -579,13 +575,13 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openZoom(src) { document.getElementById('zoomImage').src = src; document.getElementById('imageZoomModal').style.display = 'flex'; }
 
-        // 지도 핀 지정 알림
         function startRegistration(type) {
             closeModal('adminSelectModal');
             currentRegType = type;
             if(registerMarker) registerMarker.setMap(null);
             alert("📍 지도 위에서 해당 시설이 위치한 곳을 '터치(클릭)' 하세요.");
         }
+
         function openReportIntro() { document.getElementById('reportIntroModal').style.display = 'block'; }
         function openReportSelect() {
             closeModal('reportIntroModal');
@@ -611,7 +607,6 @@
             });
         }
 
-        // 시설별 동적 입력 폼 렌더링
         function renderDynamicForm(type) {
             currentRegType = null; 
             let isReport = type.startsWith('report_');
@@ -679,7 +674,6 @@
             });
         }
 
-        // 구글 앱스 스크립트로 데이터 전송
         async function submitData(type) {
             if(!document.getElementById('f_name').value) return alert("상호명/이름을 입력하세요.");
             document.getElementById('regSubmitBtn').innerText = "전송 중...";
@@ -711,14 +705,22 @@
             }
 
             try {
-                let res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), redirect: 'follow' });
+                let res = await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify(payload), 
+                    redirect: 'follow' 
+                });
                 let result = await res.json();
                 if(result.success) {
-                    alert("성공적으로 등록(제보)되었습니다.");
+                    alert("성공적으로 처리되었습니다.");
                     closeModal('registerFormModal');
                     fetchLiveData();
                 } else alert("오류: " + result.message);
-            } catch(e) { alert("통신 실패. 네트워크를 확인해주세요."); }
+            } catch(e) { 
+                alert("통신 실패. 네트워크를 확인해주세요."); 
+            }
+            
             document.getElementById('regSubmitBtn').innerText = "완료 및 등록하기";
             document.getElementById('regSubmitBtn').disabled = false;
         }
