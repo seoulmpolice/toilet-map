@@ -62,7 +62,7 @@
             margin-top: 2px;
         }
 
-        /* 2. 검색창 박스 (상단 로고 박스와 크기 완벽 일치) */
+        /* 2. 검색창 박스 */
         #search-box {
             flex: 1;
             height: 38px;
@@ -86,29 +86,34 @@
             padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; box-sizing: border-box;
         }
 
-        /* 좌측 하단 청결도 범례 */
+        /* ★ 좌측 하단 통합 범례 박스 (편의점, 화장실, 식당 및 청결도 안내) */
         #legend-box {
             position: fixed;
             bottom: 85px;
             left: 10px;
             z-index: 100;
             background: rgba(255, 255, 255, 0.95);
-            padding: 6px 10px;
+            padding: 8px 10px;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .legend-row {
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .legend-title { color: #003478; margin-right: 2px; }
-        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-item { display: flex; align-items: center; gap: 3px; }
         .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%; 
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
             background: white;
             display: inline-block;
             box-sizing: border-box;
@@ -258,12 +263,19 @@
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
-    <!-- 좌측 하단 청결도 범례 -->
+    <!-- ★ 좌측 하단 범례 (편의점, 화장실, 식당 아이콘 및 청결도 안내 포함) -->
     <div id="legend-box">
-        <div class="legend-title">✨화장실 청결도</div>
-        <div class="legend-item"><span class="legend-color" style="border: 3px solid #2e7d32;"></span> 상</div>
-        <div class="legend-item"><span class="legend-color" style="border: 3px solid #ff9800;"></span> 중</div>
-        <div class="legend-item"><span class="legend-color" style="border: 3px solid #d32f2f;"></span> 하</div>
+        <div class="legend-row">
+            <div class="legend-item">🏪 편의점</div>
+            <div class="legend-item">🚻 화장실</div>
+            <div class="legend-item">🍽️ 식당</div>
+        </div>
+        <div class="legend-row" style="border-top: 1px solid #eee; padding-top: 4px;">
+            <div class="legend-title">✨화장실 청결도:</div>
+            <div class="legend-item"><span class="legend-color" style="border: 2px solid #2e7d32;"></span> 상</div>
+            <div class="legend-item"><span class="legend-color" style="border: 2px solid #ff9800;"></span> 중</div>
+            <div class="legend-item"><span class="legend-color" style="border: 2px solid #d32f2f;"></span> 하</div>
+        </div>
     </div>
 
     <!-- 우측 하단 검색 결과 표 -->
@@ -473,20 +485,16 @@
             dataArray.forEach(t => {
                 let cleanlinessText = t.cleanliness || '중';
                 let borderColor = '#ff9800'; 
-                let shadowStyle = 'box-shadow: 0 3px 5px rgba(0,0,0,0.3);';
+                let shadowStyle = 'box-shadow: 0 3px 6px rgba(0,0,0,0.3);';
                 
-                let iconSize = '28px'; 
-                let fontSize = '18px';
+                let iconSize = '32px'; 
+                let fontSize = '22px';
 
-                if (cleanlinessText === '상') { 
-                    borderColor = '#2e7d32'; 
-                    iconSize = '32px';
-                    fontSize = '20px';
-                } 
+                if (cleanlinessText === '상') { borderColor = '#2e7d32'; } 
                 else if (cleanlinessText === '하') { borderColor = '#d32f2f'; }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 6px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 4px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
                 content.innerHTML = '🚻';
                 content.onclick = function() { showToiletInfo(t); };
 
