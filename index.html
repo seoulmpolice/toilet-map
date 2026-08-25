@@ -184,7 +184,7 @@
         let currentRegType = null;
         
         let allData = { toilets: [], conveniences: [], restaurants: [] };
-        let allList = []; // 검색을 위해 하나로 합친 배열
+        let allList = []; 
         let markers = [];
 
         window.onload = function() {
@@ -213,7 +213,18 @@
                     let loc = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
                     map.setCenter(loc); map.setLevel(4);
                     if(myLocMarker) myLocMarker.setMap(null);
-                    let content = '<div style="font-size: 35px; background: white; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 2px solid #003478; line-height:1;">👮</div>';
+                    
+                    // 중성적이고 전문적인 기동대 방패 SVG 아이콘 적용
+                    let content = `
+                    <div style="display: flex; align-items: center; justify-content: center; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="48" height="48">
+                            <path d="M32 2 L6 10 V30 C6 46 17 57 32 62 C47 57 58 46 58 30 V10 Z" fill="#003478" />
+                            <path d="M32 6 L10 13 V30 C10 44 19 53 32 58 C45 53 54 44 54 30 V13 Z" fill="none" stroke="#ffffff" stroke-width="1.5"/>
+                            <text x="32" y="34" font-size="16" fill="#FFD700" font-weight="900" text-anchor="middle" font-family="'Malgun Gothic', sans-serif">기동대</text>
+                            <text x="32" y="51" font-size="12" fill="#ffffff" font-weight="bold" text-anchor="middle" font-family="'Arial', sans-serif">POLICE</text>
+                        </svg>
+                    </div>`;
+                    
                     myLocMarker = new kakao.maps.CustomOverlay({ map: map, position: loc, content: content, yAnchor: 1 });
                 });
             }
@@ -232,7 +243,6 @@
             document.getElementById('btn-sync').innerText = "🔄 데이터 실시간 업데이트";
         }
 
-        // 청결도 마커 색상 복원 적용
         function renderMarkers() {
             markers.forEach(m => m.overlay.setMap(null));
             markers = [];
@@ -243,7 +253,6 @@
                 let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
                 let iconSize = '35px';
 
-                // 화장실인 경우 청결도에 따라 색상 변경
                 if (category === 'toilet') {
                     if (data.cleanliness === '상') { borderColor = '#2e7d32'; iconSize = '38px'; shadowStyle = 'box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.7);'; }
                     else if (data.cleanliness === '중') { borderColor = '#ff9800'; }
@@ -265,12 +274,10 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // 우측 하단 표 및 번쩍임 효과 복원
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
             
-            // 기존 번쩍임 효과 초기화
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
                 m.overlay.setZIndex(0);
