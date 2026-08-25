@@ -197,7 +197,8 @@
     <div id="imageZoomModal" class="modal" onclick="closeModal('imageZoomModal')"><img id="zoomImage" src=""></div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSCPp8RczYeSIc4cltJLhAAwWG8r3SCrRipt0xQe_GHwWdg3UQ2G8lxIcH-MJRGAfoaw/exec'; 
+        // ★ 새로 발급받으신 Web App URL로 업데이트 완료
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxLENj0KRlVOzbURMGEIsAO7EaUJD0XLgXMhgIfH1oML2OtCFlQ8ofCE83l3B-XNuSrTQ/exec'; 
         
         let map, geocoder;
         let loggedInUser = null;
@@ -295,14 +296,12 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 검색 결과 및 UI 표현 처리
         function searchFacility() {
             try {
                 let kw = document.getElementById('searchInput').value.trim();
                 if(!kw) return alert("검색어를 입력해주세요.");
                 if (!allList || allList.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
                 
-                // 기존 모든 강조 애니메이션 클래스 제거
                 markers.forEach(m => {
                     if(m.contentDiv) m.contentDiv.classList.remove('glow-good', 'glow-normal', 'glow-bad', 'glow-default');
                     if(m.overlay) m.overlay.setZIndex(0);
@@ -326,23 +325,19 @@
                     found.forEach(ft => {
                         let idx = allList.indexOf(ft);
                         
-                        // 기본 색상 클래스 셋팅
                         let glowClass = 'glow-default';
                         let bgClass = 'res-bg-default';
                         
-                        // 화장실일 경우 청결도에 따른 맞춤형 클래스 할당
                         if (ft.category === 'toilet') {
                             if (ft.cleanliness === '상') { glowClass = 'glow-good'; bgClass = 'res-bg-good'; }
                             else if (ft.cleanliness === '하') { glowClass = 'glow-bad'; bgClass = 'res-bg-bad'; }
                             else { glowClass = 'glow-normal'; bgClass = 'res-bg-normal'; }
                         }
                         
-                        // 검색 결과 표 항목(tr)에 배경 클래스 적용
                         tableHtml += `<tr class="${bgClass}" onclick='focusOnItem(${idx})'>
                                     <td><div class="res-workplace">${ft.workplace || '미지정'}</div><div class="res-name">${ft.name}</div></td>
                                  </tr>`;
                                  
-                        // 마커에 청결도 맞춤형 애니메이션 추가
                         let matchedMarker = markers.find(m => m.data === ft);
                         if(matchedMarker && matchedMarker.contentDiv) {
                             matchedMarker.contentDiv.classList.add(glowClass);
@@ -356,7 +351,6 @@
                     resultBox.style.display = 'block';
                     document.getElementById('infoModal').style.display = 'none'; 
 
-                    // 지도 이동 로직
                     try {
                         let bounds = new kakao.maps.LatLngBounds();
                         let validCoordsCount = 0; 
@@ -432,8 +426,19 @@
                               <div class="info-row">🔑 <b>비밀번호:</b> <span style="color:red; font-weight:bold;">${data.password || '없음(개방)'}</span></div>
                               <div class="info-row">🚽 <b>시설:</b> ${data.bidet || '없음'} / 대변기 ${data.toiletCnt||0}개 / 소변기 ${data.urinalCnt||0}개</div>`;
             }
-            else if(type === 'convenience') detailHtml = `<div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">🪑 <b>취식:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
-            else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>종류:</b> ${data.mealType||'없음'}</div><div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체:</b> ${data.group||'없음'}</div>`;
+            else if(type === 'convenience') {
+                detailHtml = `<div class="info-row">🏪 <b>브랜드:</b> ${data.brand || '정보없음'}</div>
+                              <div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount || '없음'}</span></div>
+                              <div class="info-row">🪑 <b>취식:</b> ${data.table || '없음'}</div>
+                              <div class="info-row">📝 <b>특이사항:</b> ${data.notes || '없음'}</div>`;
+            }
+            else if(type === 'restaurant') {
+                detailHtml = `<div class="info-row">📞 <b>전화번호:</b> ${data.phone || '정보없음'}</div>
+                              <div class="info-row">🍲 <b>종류:</b> ${data.mealType || '없음'}</div>
+                              <div class="info-row">📋 <b>대표메뉴/가격:</b> ${data.menuPrice || '없음'}</div>
+                              <div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount || '없음'}</span></div>
+                              <div class="info-row">👥 <b>단체:</b> ${data.group || '없음'}</div>`;
+            }
 
             let html = `
                 <span class="close-btn" onclick="closeModal('infoModal')">&times;</span>
@@ -536,6 +541,7 @@
                 `;
             } else if (facilityType === 'convenience' || facilityType === '편의점') {
                 html += `
+                    <input type="text" id="f_brand" placeholder="편의점 브랜드 (예: GS25, CU)">
                     <input type="text" id="f_discount" placeholder="경찰관 할인여부">
                     <input type="text" id="f_card" placeholder="추천 제휴카드">
                     <select id="f_space"><option value="모름">취식 테이블 유무</option><option value="있음">있음</option><option value="없음">없음</option></select>
@@ -543,15 +549,26 @@
                 `;
             } else if (facilityType === 'restaurant' || facilityType === '식당') {
                 html += `
+                    <input type="text" id="f_phone" placeholder="전화번호 (예: 02-123-4567)">
                     <input type="text" id="f_breaktime" placeholder="브레이크타임">
                     <input type="text" id="f_mealType" placeholder="식사종류 (예: 한식)">
+                    <input type="text" id="f_menuPrice" placeholder="대표메뉴 및 가격 (예: 국밥 9000원)">
                     <input type="text" id="f_discount" placeholder="경찰관 할인여부">
                     <select id="f_space"><option value="모름">단체수용 여부</option><option value="가능">가능</option><option value="불가능">불가능</option></select>
                     <input type="text" id="f_notes" placeholder="특이사항">
                 `;
             }
             
-            html += `<label style="font-size: 13px; font-weight:bold; color: #555;">사진 첨부 1, 2</label><input type="file" id="f_img1" accept="image/*"><input type="file" id="f_img2" accept="image/*">`;
+            if (facilityType === 'restaurant' || facilityType === '식당') {
+                html += `<label style="font-size: 13px; font-weight:bold; color: #555;">사진 첨부 1, 2, 3</label>
+                         <input type="file" id="f_img1" accept="image/*">
+                         <input type="file" id="f_img2" accept="image/*">
+                         <input type="file" id="f_img3" accept="image/*">`;
+            } else {
+                html += `<label style="font-size: 13px; font-weight:bold; color: #555;">사진 첨부 1, 2</label>
+                         <input type="file" id="f_img1" accept="image/*">
+                         <input type="file" id="f_img2" accept="image/*">`;
+            }
             
             document.getElementById('regFormContainer').innerHTML = html;
             document.getElementById('regSubmitBtn').onclick = () => submitData(type);
@@ -585,6 +602,14 @@
 
             try {
                 let pos = registerMarker.getPosition();
+                
+                let img1 = document.getElementById('f_img1') && document.getElementById('f_img1').files[0] ? await compressImage(document.getElementById('f_img1').files[0]) : "";
+                let img2 = document.getElementById('f_img2') && document.getElementById('f_img2').files[0] ? await compressImage(document.getElementById('f_img2').files[0]) : "";
+                let img3 = document.getElementById('f_img3') && document.getElementById('f_img3').files[0] ? await compressImage(document.getElementById('f_img3').files[0]) : "";
+                
+                let imageArray = [img1, img2];
+                if (document.getElementById('f_img3')) imageArray.push(img3);
+
                 let payload = {
                     action: type.startsWith('report_') ? 'register_report' : `register_${type}`,
                     userId: loggedInUser || '',
@@ -593,7 +618,7 @@
                     workplace: document.getElementById('f_workplace').value || '',
                     address: document.getElementById('f_address').value || '',
                     hours: document.getElementById('f_hours').value || '',
-                    images: [await compressImage(document.getElementById('f_img1').files[0]), await compressImage(document.getElementById('f_img2').files[0])]
+                    images: imageArray
                 };
 
                 if(type.startsWith('report_')) {
@@ -604,9 +629,9 @@
                 } else if(type === 'toilet') {
                     Object.assign(payload, { type: document.getElementById('f_type').value, password: document.getElementById('f_password').value, cleanliness: document.getElementById('f_cleanliness').value, bidet: document.getElementById('f_bidet').value, toiletCnt: document.getElementById('f_toiletCnt').value, urinalCnt: document.getElementById('f_urinalCnt').value });
                 } else if(type === 'convenience') {
-                    Object.assign(payload, { discount: document.getElementById('f_discount').value, card: document.getElementById('f_card').value, table: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
+                    Object.assign(payload, { brand: document.getElementById('f_brand') ? document.getElementById('f_brand').value : "", discount: document.getElementById('f_discount').value, card: document.getElementById('f_card').value, table: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
                 } else if(type === 'restaurant') {
-                    Object.assign(payload, { breaktime: document.getElementById('f_breaktime').value, mealType: document.getElementById('f_mealType').value, discount: document.getElementById('f_discount').value, group: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
+                    Object.assign(payload, { phone: document.getElementById('f_phone') ? document.getElementById('f_phone').value : "", menuPrice: document.getElementById('f_menuPrice') ? document.getElementById('f_menuPrice').value : "", breaktime: document.getElementById('f_breaktime').value, mealType: document.getElementById('f_mealType').value, discount: document.getElementById('f_discount').value, group: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
                 }
 
                 let res = await fetch(SCRIPT_URL, { 
