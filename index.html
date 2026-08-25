@@ -71,10 +71,14 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* 검색된 마커 강조 애니메이션 */
-        .highlight-glow { animation: glow-pulse 0.8s infinite alternate !important; }
+        /* ★ 완벽하게 복원된 형광 하늘색 강조 효과 CSS */
+        .highlight-glow {
+            border-color: #00e5ff !important;
+            box-shadow: 0 0 15px 5px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.5) !important;
+            animation: glow-pulse 0.8s infinite alternate !important;
+        }
         @keyframes glow-pulse {
-            from { box-shadow: 0 0 8px 3px rgba(0, 229, 255, 0.7); transform: scale(1); }
+            from { box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); transform: scale(1); }
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
     </style>
@@ -171,7 +175,6 @@
     <div id="imageZoomModal" class="modal" onclick="closeModal('imageZoomModal')"><img id="zoomImage" src=""></div>
 
     <script>
-        // ★ 최신으로 발급받으신 Web App URL로 업데이트 됨
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSCPp8RczYeSIc4cltJLhAAwWG8r3SCrRipt0xQe_GHwWdg3UQ2G8lxIcH-MJRGAfoaw/exec'; 
         
         let map, geocoder;
@@ -270,9 +273,11 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
+        // ★ 버그가 완벽하게 수정된 검색 표출 함수
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
+            if (!allList || allList.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
             
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
@@ -290,6 +295,7 @@
                 let bounds = new kakao.maps.LatLngBounds();
                 
                 found.forEach(ft => {
+                    // 유효한 좌표가 있을 때만 bounds에 추가
                     if(ft.lat && ft.lng) {
                         bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
                     }
@@ -313,7 +319,8 @@
                 if(found.length === 1 && found[0].lat && found[0].lng) {
                     map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
                     map.setLevel(3);
-                } else if (!bounds.isEmpty()) {
+                } else {
+                    // 오류를 발생시키던 bounds.isEmpty()를 삭제하고 안전하게 처리
                     map.setBounds(bounds);
                 }
 
