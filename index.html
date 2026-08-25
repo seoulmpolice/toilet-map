@@ -71,14 +71,10 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* ★ 완벽하게 복원된 형광 하늘색 강조 효과 CSS */
-        .highlight-glow {
-            border-color: #00e5ff !important;
-            box-shadow: 0 0 15px 5px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.5) !important;
-            animation: glow-pulse 0.8s infinite alternate !important;
-        }
+        /* 검색된 마커 강조 애니메이션 */
+        .highlight-glow { animation: glow-pulse 0.8s infinite alternate !important; }
         @keyframes glow-pulse {
-            from { box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); transform: scale(1); }
+            from { box-shadow: 0 0 8px 3px rgba(0, 229, 255, 0.7); transform: scale(1); }
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
     </style>
@@ -273,11 +269,9 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 버그가 완벽하게 수정된 검색 표출 함수
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
-            if (!allList || allList.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
             
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
@@ -295,7 +289,6 @@
                 let bounds = new kakao.maps.LatLngBounds();
                 
                 found.forEach(ft => {
-                    // 유효한 좌표가 있을 때만 bounds에 추가
                     if(ft.lat && ft.lng) {
                         bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
                     }
@@ -319,8 +312,7 @@
                 if(found.length === 1 && found[0].lat && found[0].lng) {
                     map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
                     map.setLevel(3);
-                } else {
-                    // 오류를 발생시키던 bounds.isEmpty()를 삭제하고 안전하게 처리
+                } else if (!bounds.isEmpty()) {
                     map.setBounds(bounds);
                 }
 
@@ -381,16 +373,19 @@
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
+                // ★ headers 옵션을 제거하여 브라우저의 CORS Preflight 블록을 원천 차단
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ action: 'login', id, pw }),
                     redirect: 'follow'
                 });
                 let result = await res.json();
                 if(result.success) { sessionStorage.setItem('adminId', id); setLoggedInUI(id); document.getElementById('adminSelectModal').style.display = 'block'; }
                 else alert(result.message);
-            } catch(e) { alert("통신 오류가 발생했습니다. 네트워크 상태나 스크립트 주소를 확인해주세요."); }
+            } catch(e) { 
+                console.error("Fetch 통신 실패:", e);
+                alert("통신 실패: " + e.message + "\n(구글 앱스 스크립트 권한을 다시 확인해주세요.)"); 
+            }
             btn.innerText = "로그인";
         }
 
@@ -533,9 +528,9 @@
                     Object.assign(payload, { breaktime: document.getElementById('f_breaktime').value, mealType: document.getElementById('f_mealType').value, discount: document.getElementById('f_discount').value, group: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
                 }
 
+                // ★ headers 옵션을 제거하여 브라우저의 CORS Preflight 블록을 원천 차단
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload),
                     redirect: 'follow'
                 });
@@ -550,7 +545,7 @@
                 }
             } catch(e) { 
                 console.error("Fetch 통신 실패:", e);
-                alert("통신 실패. 네트워크 상태나 스크립트 주소를 확인해주세요.\n(만약 계속된다면 구글 Apps Script 권한 허용이 안 된 것입니다.)"); 
+                alert("통신 실패: " + e.message + "\n(구글 앱스 스크립트 권한을 다시 확인해주세요.)"); 
             }
             
             document.getElementById('regSubmitBtn').innerText = "완료 및 등록하기";
