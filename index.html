@@ -27,7 +27,6 @@
         .legend-row { display: flex; align-items: center; gap: 8px; }
         .legend-title { color: #003478; margin-right: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
-        /* 범례 아이콘도 원형으로 변경 */
         .legend-icon-box { width: 18px; height: 18px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; }
         .legend-color { width: 12px; height: 12px; border-radius: 50%; display: inline-block; box-sizing: border-box; }
 
@@ -37,7 +36,7 @@
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
         #search-result-box td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 11px; line-height: 1.3; cursor: pointer; }
-        #search-result-box tr:hover { background: #e3f2fd; }
+        #search-result-box tr:hover { opacity: 0.8; }
         #search-result-box tr:last-child td { border-bottom: none; }
         .res-workplace { font-weight: bold; color: #003478; font-size: 12px; }
         .res-name { color: #555; }
@@ -72,16 +71,38 @@
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
-        /* ★ 완벽하게 복원된 형광 하늘색 강조 효과 CSS */
-        .highlight-glow {
-            border-color: #00e5ff !important;
-            box-shadow: 0 0 15px 5px rgba(0, 229, 255, 0.8), inset 0 0 10px rgba(0, 229, 255, 0.5) !important;
-            animation: glow-pulse 0.8s infinite alternate !important;
+        /* ★ 청결도 맞춤형 강조 애니메이션 (마커 바깥으로 색상별 빛 퍼짐) */
+        .glow-good { animation: pulse-good 0.8s infinite alternate !important; }
+        @keyframes pulse-good {
+            from { box-shadow: 0 0 10px 2px rgba(46, 125, 50, 0.5); transform: scale(1); }
+            to { box-shadow: 0 0 20px 8px rgba(46, 125, 50, 1); transform: scale(1.15); }
         }
-        @keyframes glow-pulse {
+        
+        .glow-normal { animation: pulse-normal 0.8s infinite alternate !important; }
+        @keyframes pulse-normal {
+            from { box-shadow: 0 0 10px 2px rgba(255, 152, 0, 0.5); transform: scale(1); }
+            to { box-shadow: 0 0 20px 8px rgba(255, 152, 0, 1); transform: scale(1.15); }
+        }
+        
+        .glow-bad { animation: pulse-bad 0.8s infinite alternate !important; }
+        @keyframes pulse-bad {
+            from { box-shadow: 0 0 10px 2px rgba(211, 47, 47, 0.5); transform: scale(1); }
+            to { box-shadow: 0 0 20px 8px rgba(211, 47, 47, 1); transform: scale(1.15); }
+        }
+
+        /* 편의점/식당 기본 강조 */
+        .glow-default { animation: pulse-default 0.8s infinite alternate !important; }
+        @keyframes pulse-default {
             from { box-shadow: 0 0 10px 2px rgba(0, 229, 255, 0.5); transform: scale(1); }
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
+
+        /* ★ 검색 결과 리스트 청결도 맞춤형 배경색 */
+        .res-bg-good { background-color: #e8f5e9 !important; border-left: 4px solid #2e7d32; }
+        .res-bg-normal { background-color: #fff3e0 !important; border-left: 4px solid #ff9800; }
+        .res-bg-bad { background-color: #ffebee !important; border-left: 4px solid #d32f2f; }
+        .res-bg-default { background-color: #ffffff; }
+
     </style>
     <!-- 카카오맵 API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
@@ -260,7 +281,6 @@
                     else { borderColor = '#ff9800'; } 
                 }
 
-                // ★ 마커 모양을 완벽한 원형(border-radius: 50%)으로 변경
                 let content = document.createElement('div');
                 content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0; transition: all 0.2s;`;
                 content.innerHTML = icon;
@@ -275,20 +295,19 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 검색 결과가 "무조건" 나타나도록 지도 이동과 리스트 생성을 철저히 분리
+        // ★ 검색 결과 및 UI 표현 처리
         function searchFacility() {
             try {
                 let kw = document.getElementById('searchInput').value.trim();
                 if(!kw) return alert("검색어를 입력해주세요.");
                 if (!allList || allList.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
                 
-                // 기존 강조 효과 초기화
+                // 기존 모든 강조 애니메이션 클래스 제거
                 markers.forEach(m => {
-                    if(m.contentDiv) m.contentDiv.classList.remove('highlight-glow');
+                    if(m.contentDiv) m.contentDiv.classList.remove('glow-good', 'glow-normal', 'glow-bad', 'glow-default');
                     if(m.overlay) m.overlay.setZIndex(0);
                 });
                 
-                // 대소문자 무시, 문자열로 안전하게 변환 후 검색
                 let searchKw = kw.toLowerCase();
                 let found = allList.filter(item => {
                     let nameStr = item.name ? String(item.name).toLowerCase() : "";
@@ -299,7 +318,6 @@
                 let resultBox = document.getElementById('search-result-box');
                 
                 if(found.length > 0) {
-                    // [1] 지도 좌표와 상관없이 무조건 우측 하단 표(UI) 먼저 생성
                     let tableHtml = `<div class="result-header">
                         <span>검색 결과 (${found.length})</span>
                         <span class="result-close" onclick="document.getElementById('search-result-box').style.display='none'">✖</span>
@@ -307,17 +325,38 @@
                     
                     found.forEach(ft => {
                         let idx = allList.indexOf(ft);
-                        tableHtml += `<tr onclick='focusOnItem(${idx})'>
+                        
+                        // 기본 색상 클래스 셋팅
+                        let glowClass = 'glow-default';
+                        let bgClass = 'res-bg-default';
+                        
+                        // 화장실일 경우 청결도에 따른 맞춤형 클래스 할당
+                        if (ft.category === 'toilet') {
+                            if (ft.cleanliness === '상') { glowClass = 'glow-good'; bgClass = 'res-bg-good'; }
+                            else if (ft.cleanliness === '하') { glowClass = 'glow-bad'; bgClass = 'res-bg-bad'; }
+                            else { glowClass = 'glow-normal'; bgClass = 'res-bg-normal'; }
+                        }
+                        
+                        // 검색 결과 표 항목(tr)에 배경 클래스 적용
+                        tableHtml += `<tr class="${bgClass}" onclick='focusOnItem(${idx})'>
                                     <td><div class="res-workplace">${ft.workplace || '미지정'}</div><div class="res-name">${ft.name}</div></td>
                                  </tr>`;
+                                 
+                        // 마커에 청결도 맞춤형 애니메이션 추가
+                        let matchedMarker = markers.find(m => m.data === ft);
+                        if(matchedMarker && matchedMarker.contentDiv) {
+                            matchedMarker.contentDiv.classList.add(glowClass);
+                            if(matchedMarker.overlay) matchedMarker.overlay.setZIndex(10);
+                        }
                     });
+                    
                     tableHtml += `</tbody></table>`;
                     
                     resultBox.innerHTML = tableHtml;
                     resultBox.style.display = 'block';
                     document.getElementById('infoModal').style.display = 'none'; 
 
-                    // [2] 화면 표출 성공 후, 오류가 나도 멈추지 않도록 안전하게 지도 이동 처리
+                    // 지도 이동 로직
                     try {
                         let bounds = new kakao.maps.LatLngBounds();
                         let validCoordsCount = 0; 
@@ -325,16 +364,9 @@
                         found.forEach(ft => {
                             let lat = parseFloat(ft.lat);
                             let lng = parseFloat(ft.lng);
-                            
                             if(!isNaN(lat) && !isNaN(lng)) {
                                 bounds.extend(new kakao.maps.LatLng(lat, lng));
                                 validCoordsCount++;
-                            }
-                            
-                            let matchedMarker = markers.find(m => m.data === ft);
-                            if(matchedMarker && matchedMarker.contentDiv) {
-                                matchedMarker.contentDiv.classList.add('highlight-glow');
-                                if(matchedMarker.overlay) matchedMarker.overlay.setZIndex(10);
                             }
                         });
                         
@@ -346,7 +378,6 @@
                                     map.setLevel(3);
                                 }
                             } else {
-                                // 모든 좌표가 겹쳐 있을 때 발생하는 Bounds 오류 방지
                                 let sw = bounds.getSouthWest();
                                 let ne = bounds.getNorthEast();
                                 if (sw && ne && sw.equals(ne)) {
@@ -371,7 +402,6 @@
             }
         }
 
-        // 아이템 클릭 시 오류 방지
         function focusOnItem(index) {
             try {
                 let data = allList[index];
