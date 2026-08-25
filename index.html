@@ -8,17 +8,15 @@
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
 
-        /* 상단 고정 바 (아이폰 스크롤 밀림 방지 fixed) */
+        /* 상단 고정 바 */
         #top-bar { position: fixed; top: 15px; left: 15px; right: 15px; z-index: 100; display: flex; flex-wrap: wrap; gap: 12px; }
         
-        /* 1. 로고 및 텍스트 독립 박스 */
         #brand-box { flex: 1; min-width: 270px; background: rgba(255, 255, 255, 0.95); padding: 10px 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 12px; }
         #brand-box img { height: 40px; width: auto; }
         .brand-text { display: flex; flex-direction: column; justify-content: center; }
         .brand-text .title-ko { font-size: 18px; font-weight: 900; color: #12519b; letter-spacing: 0.5px; white-space: nowrap; line-height: 1.1; }
         .brand-text .title-en { font-size: 9px; font-weight: 600; color: #666666; letter-spacing: 0.2px; white-space: nowrap; line-height: 1.1; margin-top: 4px; }
 
-        /* 2. 검색창 독립 박스 */
         #search-box { flex: 1; min-width: 220px; background: rgba(255, 255, 255, 0.95); padding: 8px 10px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px; }
         #searchInput { flex: 1; margin: 0; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #f9f9f9; outline: none; }
         #searchInput:focus { border-color: #003478; background: white; }
@@ -31,7 +29,7 @@
         .legend-item { display: flex; align-items: center; gap: 4px; }
         .legend-color { width: 14px; height: 14px; border-radius: 50%; background: white; display: inline-block; box-sizing: border-box; }
         
-        /* ★ 우측 하단 검색 결과 표 컨테이너 (복원) */
+        /* 우측 하단 검색 결과 표 컨테이너 */
         #search-result-box {
             position: fixed;
             bottom: 95px;
@@ -86,7 +84,7 @@
         #imageZoomModal { z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); }
         #zoomImage { max-width: 95%; max-height: 95%; object-fit: contain; }
 
-        /* ★ 검색된 마커 강조 애니메이션 (청결도 테두리 유지 + 바깥쪽 형광 하늘색 빛남 복원) */
+        /* 검색된 마커 강조 애니메이션 (청결도 테두리는 유지하면서 외부로 빛남) */
         .highlight-glow {
             animation: glow-pulse 0.8s infinite alternate !important;
         }
@@ -95,6 +93,7 @@
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
     </style>
+    <!-- 카카오맵 API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
 <body>
@@ -136,6 +135,7 @@
     <!-- 우측 하단 검색 결과 표 -->
     <div id="search-result-box"></div>
 
+    <!-- 하단 고정 버튼 바 -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
         <button id="btn-admin" onclick="checkAdminAccess()">➕ 관리자 등록</button>
@@ -262,10 +262,11 @@
 
             const createMarker = (data, icon, defaultBorder, category) => {
                 let borderColor = defaultBorder;
+                let shadowStyle = 'box-shadow: 0 2px 5px rgba(0,0,0,0.4);';
                 
-                // ★ 요청하신 대로 아이콘 사이즈를 전체적으로 아담하게 줄임
-                let iconSize = '28px'; 
-                let fontSize = '16px';
+                // 크기를 보기 좋게 키움
+                let iconSize = '34px'; 
+                let fontSize = '18px';
 
                 // 청결도별 테두리 색상 처리 (화장실 전용)
                 if (category === 'toilet') {
@@ -276,12 +277,11 @@
                 }
 
                 let content = document.createElement('div');
-                // 원형 유지, 테두리 두께 3px
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); border: 3px solid ${borderColor}; cursor: pointer; position: relative; z-index: 2; transition: all 0.2s;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 50%; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; cursor: pointer; position: relative; z-index: 2; transition: all 0.2s;`;
                 content.innerHTML = icon;
                 content.onclick = () => showInfo(data, category);
                 
-                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1, zIndex: 0 });
+                let overlay = new kakao.maps.CustomOverlay({ map: map, position: new kakao.maps.LatLng(data.lat, data.lng), content: content, yAnchor: 1 });
                 markers.push({ overlay: overlay, contentDiv: content, data: data, category: category });
             };
 
@@ -290,12 +290,12 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 검색 처리, 우측 하단 표 생성 및 형광 하늘색 번쩍임(highlight-glow) 효과 복원
+        // 안정적인 검색 기능 및 형광 하늘색 강조 효과
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
             
-            // 기존 번쩍임(클래스) 전부 초기화
+            // 기존 번쩍임 효과 제거 (초기화)
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
                 m.overlay.setZIndex(0);
@@ -312,14 +312,17 @@
                 let bounds = new kakao.maps.LatLngBounds();
                 
                 found.forEach(ft => {
-                    bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    // 유효한 좌표가 있는 경우에만 처리
+                    if(ft.lat && ft.lng) {
+                        bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    }
                     let idx = allList.indexOf(ft);
                     
-                    // 청결도 테두리를 건드리지 않는 '형광 하늘색 번쩍임' 클래스 추가
+                    // 해당 마커에 형광 애니메이션 부여
                     let matchedMarker = markers.find(m => m.data === ft);
                     if(matchedMarker) {
                         matchedMarker.contentDiv.classList.add('highlight-glow');
-                        matchedMarker.overlay.setZIndex(10);
+                        matchedMarker.overlay.setZIndex(10); // 강조 표시를 제일 위로
                     }
                     
                     tableHtml += `<tr onclick='focusOnItem(${idx})'>
@@ -328,12 +331,12 @@
                 });
                 tableHtml += `</tbody></table>`;
                 resultBox.innerHTML = tableHtml;
-                resultBox.style.display = 'block';
+                resultBox.style.display = 'block'; // 우측 표 띄우기
                 
-                if(found.length === 1) {
+                if(found.length === 1 && found[0].lat && found[0].lng) {
                     map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
                     map.setLevel(3);
-                } else {
+                } else if (!bounds.isEmpty()) {
                     map.setBounds(bounds);
                 }
                 document.getElementById('infoModal').style.display = 'none';
@@ -345,8 +348,10 @@
         
         function focusOnItem(index) {
             let data = allList[index];
-            map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
-            map.setLevel(3);
+            if(data.lat && data.lng) {
+                map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
+                map.setLevel(3);
+            }
             showInfo(data, data.category);
         }
 
@@ -544,7 +549,6 @@
             }
 
             try {
-                // 보안 검증을 통과하는 가장 안전한 형태의 fetch 옵션 적용
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     body: JSON.stringify(payload),
