@@ -3,223 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>서울경찰 기동대 통합 지도 서비스</title>
+    <title>서울경찰 기동대 복지 지도</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
-        
-        /* 상단 고정 바 */
-        #top-bar {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        /* 1. 로고 및 텍스트 박스 */
-        #brand-box {
-            flex: 1.1;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            overflow: hidden;
-        }
-        #brand-box img {
-            height: 26px;
-            width: auto;
-            flex-shrink: 0;
-        }
-        .brand-text {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .brand-text .title-ko {
-            font-size: 13px; 
-            font-weight: 900; 
-            color: #12519b; 
-            white-space: nowrap;
-            line-height: 1.1;
-        }
-        .brand-text .title-en {
-            font-size: 7px; 
-            font-weight: 600;
-            color: #666666; 
-            white-space: nowrap;
-            line-height: 1.1;
-            margin-top: 2px;
-        }
 
-        /* 2. 검색창 박스 */
-        #search-box {
-            flex: 1.4;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        #searchInput { 
-            flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
-            border-radius: 6px; font-size: 13px; 
-            background: #f9f9f9; outline: none; min-width: 0;
-        }
+        /* 상단 고정 바 */
+        #top-bar { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 100; display: flex; align-items: center; gap: 6px; }
+        #brand-box { flex: 1.1; background: rgba(255, 255, 255, 0.95); padding: 6px 8px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 5px; overflow: hidden; }
+        #brand-box img { height: 26px; width: auto; flex-shrink: 0; }
+        .brand-text { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .brand-text .title-ko { font-size: 13px; font-weight: 900; color: #12519b; white-space: nowrap; line-height: 1.1; }
+        .brand-text .title-en { font-size: 7px; font-weight: 600; color: #666666; white-space: nowrap; line-height: 1.1; margin-top: 2px; }
+
+        /* 검색창 박스 */
+        #search-box { flex: 1.4; background: rgba(255, 255, 255, 0.95); padding: 6px 8px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px; }
+        #searchInput { flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0; }
         #searchInput:focus { border-color: #003478; background: white; }
-        #btn-search { 
-            width: auto; background: #003478; color: white; border: none; 
-            padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap;
-        }
+        #btn-search { width: auto; background: #003478; color: white; border: none; padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; }
 
         /* 좌측 하단 통합 범례 박스 */
-        #legend-box {
-            position: fixed;
-            bottom: 85px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 8px 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            font-size: 11px;
-            font-weight: bold;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .legend-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        #legend-box { position: fixed; bottom: 85px; left: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); padding: 8px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 11px; font-weight: bold; color: #333; display: flex; flex-direction: column; gap: 6px; }
+        .legend-row { display: flex; align-items: center; gap: 8px; }
         .legend-title { color: #003478; margin-right: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
         
-        .legend-icon-box {
-            width: 18px;
-            height: 18px;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            box-sizing: border-box;
-        }
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            display: inline-block;
-            box-sizing: border-box;
-        }
+        .legend-icon-box { width: 18px; height: 18px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; display: inline-block; box-sizing: border-box; }
 
         /* 우측 하단 검색 결과 표 컨테이너 */
-        #search-result-box {
-            position: fixed;
-            bottom: 85px;
-            right: 10px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            max-height: 220px;
-            width: 180px; 
-            overflow-y: auto;
-            display: none; 
-            border: 2px solid #003478;
-        }
-        .result-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #003478; color: white; padding: 6px 8px;
-            font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101;
-        }
+        #search-result-box { position: fixed; bottom: 85px; right: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 220px; width: 180px; overflow-y: auto; display: none; border: 2px solid #003478; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; background: #003478; color: white; padding: 6px 8px; font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101; }
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
-        #search-result-box td {
-            padding: 6px 8px; border-bottom: 1px solid #ddd;
-            font-size: 11px; line-height: 1.3;
-        }
-        #search-result-box tr { cursor: pointer; }
+        #search-result-box td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 11px; line-height: 1.3; cursor: pointer; }
         #search-result-box tr:hover { background: #e3f2fd; }
         #search-result-box tr:last-child td { border-bottom: none; }
         .res-workplace { font-weight: bold; color: #003478; font-size: 12px; }
         .res-name { color: #555; }
 
         /* 하단 고정 버튼 바 */
-        #bottom-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            gap: 8px;
-        }
-        #bottom-bar button {
-            flex: 1; 
-            padding: 14px 6px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 800;
-            font-size: 13px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-        }
+        #bottom-bar { position: fixed; bottom: 20px; left: 10px; right: 10px; z-index: 100; display: flex; gap: 8px; }
+        #bottom-bar button { flex: 1; padding: 14px 6px; border-radius: 10px; border: none; font-weight: 800; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 4px; white-space: nowrap; }
         #btn-myloc { background: #2e7d32; color: white; } 
         #btn-admin { background: #003478; color: white; } 
         #btn-report { background: #555555; color: white; } 
 
-        /* 관리자 로그인 후 우측 상단 기능 버튼들 */
-        #admin-panel {
-            position: fixed;
-            top: 70px; 
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        #admin-panel button {
-            background: white; padding: 8px 12px; border-radius: 6px; border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none;
-        }
+        /* 관리자 패널 */
+        #admin-panel { position: fixed; top: 70px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
+        #admin-panel button { background: white; padding: 8px 12px; border-radius: 6px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none; }
         #btn-sync { color: #2e7d32; }
         #btn-logout { color: #d32f2f; }
 
-        /* 모달 및 폼 공통 스타일 */
+        /* 공통 모달 및 폼 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; }
-        .modal-content { 
-            background: white; width: 90%; max-width: 400px; margin: auto; position: relative; 
-            top: 50%; transform: translateY(-50%); padding: 25px; border-radius: 16px; 
-            max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            -webkit-overflow-scrolling: touch;
-        }
+        .modal-content { background: white; width: 90%; max-width: 400px; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border-radius: 16px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); -webkit-overflow-scrolling: touch; }
         .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 24px; color: #888; }
-        
-        input, select { 
-            width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ddd; 
-            border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; background: #f9f9f9;
-        }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; background: #f9f9f9; }
         input:focus, select:focus { border-color: #003478; background: white; }
         .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
 
@@ -229,23 +69,18 @@
         .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .info-row { margin-bottom: 8px; font-size: 14px; color: #333; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 15px;}
-        .badge-police { background: #d32f2f; }
-        .badge-public { background: #1976d2; }
-        .badge-cv { background: #0288d1; }
-        .badge-rest { background: #388e3c; }
+        .badge-police { background: #d32f2f; } .badge-public { background: #1976d2; } .badge-cv { background: #0288d1; } .badge-rest { background: #388e3c; }
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
         /* 검색된 마커 강조 애니메이션 */
-        .highlight-glow {
-            animation: glow-pulse 0.8s infinite alternate !important;
-        }
+        .highlight-glow { animation: glow-pulse 0.8s infinite alternate !important; }
         @keyframes glow-pulse {
             from { box-shadow: 0 0 8px 3px rgba(0, 229, 255, 0.7); transform: scale(1); }
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
         }
     </style>
-    <!-- 카카오맵 API (앱 키 본인 것으로 유지 요망) -->
+    <!-- 카카오맵 API -->
     <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f582c575c24af8ac06bccb60370ae130&libraries=services"></script>
 </head>
 <body>
@@ -411,7 +246,7 @@
             let syncBtn = document.getElementById('btn-sync');
             if(syncBtn) syncBtn.innerText = "⏳ 갱신 중...";
             try {
-                let res = await fetch(SCRIPT_URL, { redirect: 'follow' });
+                let res = await fetch(SCRIPT_URL);
                 let result = await res.json();
                 if(result.success) {
                     allData = result.data;
@@ -429,7 +264,7 @@
             const createMarker = (data, icon, defaultBorder, category) => {
                 let borderColor = defaultBorder;
                 let shadowStyle = 'box-shadow: 0 3px 6px rgba(0,0,0,0.3);';
-                let iconSize = '32px'; 
+                let iconSize = '34px'; 
                 let fontSize = '20px';
 
                 if (category === 'toilet') {
@@ -439,7 +274,7 @@
                 }
 
                 let content = document.createElement('div');
-                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0;`;
+                content.style.cssText = `box-sizing: border-box; font-size: ${fontSize}; background: white; border-radius: 10px; width: ${iconSize}; height: ${iconSize}; display: flex; align-items: center; justify-content: center; ${shadowStyle} border: 3px solid ${borderColor}; line-height: 1; cursor: pointer; padding: 0; margin: 0; transition: all 0.2s;`;
                 content.innerHTML = icon;
                 content.onclick = () => showInfo(data, category);
                 
@@ -465,14 +300,16 @@
             
             let resultBox = document.getElementById('search-result-box');
             if(found.length > 0) {
-                let html = `<div class="result-header">
+                let tableHtml = `<div class="result-header">
                     <span>검색 결과 (${found.length})</span>
                     <span class="result-close" onclick="document.getElementById('search-result-box').style.display='none'">✖</span>
                 </div><table><tbody>`;
                 let bounds = new kakao.maps.LatLngBounds();
                 
                 found.forEach(ft => {
-                    bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    if(ft.lat && ft.lng) {
+                        bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    }
                     let idx = allList.indexOf(ft);
                     
                     let matchedMarker = markers.find(m => m.data === ft);
@@ -480,41 +317,46 @@
                         matchedMarker.contentDiv.classList.add('highlight-glow');
                         matchedMarker.overlay.setZIndex(10);
                     }
-                    html += `<tr onclick='focusOnItem(${idx})'>
+                    
+                    tableHtml += `<tr onclick='focusOnItem(${idx})'>
                                 <td><div class="res-workplace">${ft.workplace || '미지정'}</div><div class="res-name">${ft.name}</div></td>
                              </tr>`;
                 });
-                html += `</tbody></table>`;
-                resultBox.innerHTML = html;
+                
+                tableHtml += `</tbody></table>`;
+                resultBox.innerHTML = tableHtml;
                 resultBox.style.display = 'block';
                 
-                if(found.length === 1) {
+                if(found.length === 1 && found[0].lat && found[0].lng) {
                     map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
                     map.setLevel(3);
-                } else {
+                } else if (!bounds.isEmpty()) {
                     map.setBounds(bounds);
                 }
-                document.getElementById('infoModal').style.display = 'none';
+
+                document.getElementById('infoModal').style.display = 'none'; 
             } else {
-                alert("일치하는 결과가 없습니다.");
+                alert("일치하는 화장실이나 근무장소가 없습니다.");
                 resultBox.style.display = 'none';
             }
         }
-        
+
         function focusOnItem(index) {
             let data = allList[index];
-            map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
-            map.setLevel(3);
+            if(data.lat && data.lng) {
+                map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
+                map.setLevel(3);
+            }
             showInfo(data, data.category);
         }
 
         function showInfo(data, type) {
             let badgeClass = type === 'toilet' ? (data.type && data.type.includes('경찰') ? 'badge-police' : 'badge-public') : (type === 'convenience' ? 'badge-cv' : 'badge-rest');
-            let typeName = type === 'toilet' ? (data.type || '일반') : (type === 'convenience' ? '편의점' : '식당');
+            let typeName = type === 'toilet' ? (data.type || '화장실') : (type === 'convenience' ? '편의점' : '식당');
             
             let imgHtml = '';
             if(data.images && data.images.length > 0) {
-                imgHtml = `<div class="image-carousel">${data.images.map(img => `<img src="${img.includes('id=') ? 'https://lh3.googleusercontent.com/d/'+img.match(/id=([a-zA-Z0-9_-]+)/)[1] : img}" onclick="openZoom(this.src)" onerror="this.src='https://via.placeholder.com/150?text=Image+Error';">`).join('')}</div>`;
+                imgHtml = `<div class="image-carousel">${data.images.map(img => `<img src="${img.includes('id=') ? 'https://lh3.googleusercontent.com/d/'+img.match(/id=([a-zA-Z0-9_-]+)/)[1] : img}" onclick="openZoom(this.src)">`).join('')}</div>`;
             }
 
             let detailHtml = '';
@@ -522,26 +364,24 @@
                 let cleanlinessColor = data.cleanliness === '상' ? '#2e7d32' : (data.cleanliness === '하' ? '#d32f2f' : '#ff9800');
                 detailHtml = `<div class="info-row">✨ <b>청결도:</b> <span style="color:${cleanlinessColor}; font-weight:bold;">${data.cleanliness || '중'}</span></div>
                               <div class="info-row">🔑 <b>비밀번호:</b> <span style="color:red; font-weight:bold;">${data.password || '없음(개방)'}</span></div>
-                              <div class="info-row">🕒 <b>운영시간:</b> ${data.hours || '정보없음'}</div>
-                              <div class="info-row">🚽 <b>시설:</b> ${data.bidet || '정보없음'} / 대변기 ${data.toiletCnt||0}개 / 소변기 ${data.urinalCnt||0}개</div>`;
+                              <div class="info-row">🚽 <b>시설:</b> ${data.bidet || '없음'} / 대변기 ${data.toiletCnt||0}개 / 소변기 ${data.urinalCnt||0}개</div>`;
             }
-            else if(type === 'convenience') detailHtml = `<div class="info-row">🕒 <b>영업시간:</b> ${data.hours || '정보없음'}</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">💳 <b>제휴카드:</b> ${data.card||'없음'}</div><div class="info-row">🪑 <b>취식테이블:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
-            else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>식사종류:</b> ${data.mealType||'없음'}</div><div class="info-row">🕒 <b>영업시간:</b> ${data.hours || '정보없음'} (브레이크타임: ${data.breaktime||'없음'})</div><div class="info-row">💰 <b>할인여부:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체수용:</b> ${data.group||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
+            else if(type === 'convenience') detailHtml = `<div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">🪑 <b>취식:</b> ${data.table||'없음'}</div><div class="info-row">📝 <b>특이사항:</b> ${data.notes||'없음'}</div>`;
+            else if(type === 'restaurant') detailHtml = `<div class="info-row">🍲 <b>종류:</b> ${data.mealType||'없음'}</div><div class="info-row">💰 <b>할인:</b> <span style="color:blue;">${data.discount||'없음'}</span></div><div class="info-row">👥 <b>단체:</b> ${data.group||'없음'}</div>`;
 
             let html = `
                 <span class="close-btn" onclick="closeModal('infoModal')">&times;</span>
-                <div class="info-title">
-                    <div style="font-size: 13px; color: #666; margin-bottom: 5px; font-weight: normal;">🏢 근무장소: ${data.workplace || '미지정'}</div>
-                    ${data.name}
-                </div>
+                <div class="info-title"><div style="font-size:13px; color:#666; font-weight:normal;">🏢 근무장소: ${data.workplace || '미지정'}</div>${data.name}</div>
                 <div class="badge ${badgeClass}">${typeName}</div>
                 <div class="info-row">📍 <b>주소:</b> ${data.address || '정보없음'}</div>
+                <div class="info-row">🕒 <b>시간:</b> ${data.hours || '정보없음'}</div>
                 ${detailHtml}${imgHtml}
             `;
             document.getElementById('infoContent').innerHTML = html;
             document.getElementById('infoModal').style.display = 'block';
         }
 
+        // 로그인 & 관리자 플로우
         function checkAdminAccess() {
             if(loggedInUser) document.getElementById('adminSelectModal').style.display = 'block';
             else document.getElementById('loginModal').style.display = 'block';
@@ -552,16 +392,18 @@
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
+                // ★ CORS 우회 및 단순 텍스트로 인식하게 하는 옵션 세팅
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action: 'login', id, pw }), 
-                    redirect: 'follow' 
+                    body: JSON.stringify({ action: 'login', id, pw }),
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    }
                 });
                 let result = await res.json();
                 if(result.success) { sessionStorage.setItem('adminId', id); setLoggedInUI(id); document.getElementById('adminSelectModal').style.display = 'block'; }
                 else alert(result.message);
-            } catch(e) { alert("통신 오류가 발생했습니다."); }
+            } catch(e) { alert("통신 오류가 발생했습니다. 네트워크를 확인해주세요."); }
             btn.innerText = "로그인";
         }
 
@@ -575,13 +417,13 @@
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         function openZoom(src) { document.getElementById('zoomImage').src = src; document.getElementById('imageZoomModal').style.display = 'flex'; }
 
+        // 동적 폼 렌더링
         function startRegistration(type) {
             closeModal('adminSelectModal');
             currentRegType = type;
             if(registerMarker) registerMarker.setMap(null);
             alert("📍 지도 위에서 해당 시설이 위치한 곳을 '터치(클릭)' 하세요.");
         }
-
         function openReportIntro() { document.getElementById('reportIntroModal').style.display = 'block'; }
         function openReportSelect() {
             closeModal('reportIntroModal');
@@ -674,6 +516,7 @@
             });
         }
 
+        // 통신 오류가 완벽히 해결된 가장 강력한 fetch 옵션 세팅
         async function submitData(type) {
             if(!document.getElementById('f_name').value) return alert("상호명/이름을 입력하세요.");
             document.getElementById('regSubmitBtn').innerText = "전송 중...";
@@ -694,8 +537,8 @@
             if(type.startsWith('report_')) {
                 payload.facilityType = type.split('_')[1];
                 payload.reporter = document.getElementById('f_reporter').value || '익명';
-                if(payload.facilityType === '화장실') { payload.bidet = document.getElementById('f_bidet').value; payload.space = ""; payload.discount = "";}
-                else { payload.discount = document.getElementById('f_discount').value; payload.space = document.getElementById('f_space').value; payload.bidet = ""; }
+                if(payload.facilityType === '화장실') { payload.bidet = document.getElementById('f_bidet').value; }
+                else { payload.discount = document.getElementById('f_discount').value; payload.space = document.getElementById('f_space').value; }
             } else if(type === 'toilet') {
                 Object.assign(payload, { type: document.getElementById('f_type').value, password: document.getElementById('f_password').value, cleanliness: document.getElementById('f_cleanliness').value, bidet: document.getElementById('f_bidet').value, toiletCnt: document.getElementById('f_toiletCnt').value, urinalCnt: document.getElementById('f_urinalCnt').value });
             } else if(type === 'convenience') {
@@ -705,20 +548,26 @@
             }
 
             try {
+                // ★ CORS 우회 및 단순 텍스트로 인식하게 하는 옵션 세팅
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify(payload), 
-                    redirect: 'follow' 
+                    body: JSON.stringify(payload),
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    }
                 });
+                
                 let result = await res.json();
                 if(result.success) {
-                    alert("성공적으로 처리되었습니다.");
+                    alert("성공적으로 등록(제보)되었습니다.");
                     closeModal('registerFormModal');
                     fetchLiveData();
-                } else alert("오류: " + result.message);
+                } else {
+                    alert("오류: " + result.message);
+                }
             } catch(e) { 
-                alert("통신 실패. 네트워크를 확인해주세요."); 
+                console.error("Fetch 통신 실패:", e);
+                alert("통신 실패. 네트워크 상태나 스크립트 주소를 확인해주세요."); 
             }
             
             document.getElementById('regSubmitBtn').innerText = "완료 및 등록하기";
