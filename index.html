@@ -3,222 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>서울경찰 기동대 화장실 지도</title>
+    <title>서울경찰 기동대 복지 지도</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; font-family: 'Malgun Gothic', sans-serif; background-color: #f4f4f4; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
         
         /* 상단 고정 바 */
-        #top-bar {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        /* 1. 로고 및 텍스트 박스 */
-        #brand-box {
-            flex: 1.1;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            overflow: hidden;
-        }
-        #brand-box img {
-            height: 26px;
-            width: auto;
-            flex-shrink: 0;
-        }
-        .brand-text {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .brand-text .title-ko {
-            font-size: 13px; 
-            font-weight: 900; 
-            color: #12519b; 
-            white-space: nowrap;
-            line-height: 1.1;
-        }
-        .brand-text .title-en {
-            font-size: 7px; 
-            font-weight: 600;
-            color: #666666; 
-            white-space: nowrap;
-            line-height: 1.1;
-            margin-top: 2px;
-        }
+        #top-bar { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 100; display: flex; align-items: center; gap: 6px; }
+        #brand-box { flex: 1.1; background: rgba(255, 255, 255, 0.95); padding: 6px 8px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; gap: 5px; overflow: hidden; }
+        #brand-box img { height: 26px; width: auto; flex-shrink: 0; }
+        .brand-text { display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .brand-text .title-ko { font-size: 13px; font-weight: 900; color: #12519b; white-space: nowrap; line-height: 1.1; }
+        .brand-text .title-en { font-size: 7px; font-weight: 600; color: #666666; white-space: nowrap; line-height: 1.1; margin-top: 2px; }
 
-        /* 2. 검색창 박스 */
-        #search-box {
-            flex: 1.4;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 6px 8px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        #searchInput { 
-            flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; 
-            border-radius: 6px; font-size: 13px; 
-            background: #f9f9f9; outline: none; min-width: 0;
-        }
+        /* 검색창 박스 */
+        #search-box { flex: 1.4; background: rgba(255, 255, 255, 0.95); padding: 6px 8px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 4px; }
+        #searchInput { flex: 1; margin: 0; padding: 7px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #f9f9f9; outline: none; min-width: 0; }
         #searchInput:focus { border-color: #003478; background: white; }
-        #btn-search { 
-            width: auto; background: #003478; color: white; border: none; 
-            padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap;
-        }
+        #btn-search { width: auto; background: #003478; color: white; border: none; padding: 7px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; white-space: nowrap; }
 
         /* 좌측 하단 통합 범례 박스 */
-        #legend-box {
-            position: fixed;
-            bottom: 85px;
-            left: 10px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 8px 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            font-size: 11px;
-            font-weight: bold;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .legend-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        #legend-box { position: fixed; bottom: 85px; left: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); padding: 8px 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-size: 11px; font-weight: bold; color: #333; display: flex; flex-direction: column; gap: 6px; }
+        .legend-row { display: flex; align-items: center; gap: 8px; }
         .legend-title { color: #003478; margin-right: 2px; }
         .legend-item { display: flex; align-items: center; gap: 4px; }
-        
-        .legend-icon-box {
-            width: 18px;
-            height: 18px;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            box-sizing: border-box;
-        }
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            display: inline-block;
-            box-sizing: border-box;
-        }
+        .legend-icon-box { width: 18px; height: 18px; background: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; box-sizing: border-box; }
+        .legend-color { width: 12px; height: 12px; border-radius: 2px; display: inline-block; box-sizing: border-box; }
 
         /* 우측 하단 검색 결과 표 컨테이너 */
-        #search-result-box {
-            position: fixed;
-            bottom: 85px;
-            right: 10px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            max-height: 220px;
-            width: 180px; 
-            overflow-y: auto;
-            display: none; 
-            border: 2px solid #003478;
-        }
-        .result-header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: #003478; color: white; padding: 6px 8px;
-            font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101;
-        }
+        #search-result-box { position: fixed; bottom: 85px; right: 10px; z-index: 100; background: rgba(255, 255, 255, 0.95); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 220px; width: 180px; overflow-y: auto; display: none; border: 2px solid #003478; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; background: #003478; color: white; padding: 6px 8px; font-size: 12px; font-weight: bold; position: sticky; top: 0; z-index: 101; }
         .result-close { cursor: pointer; color: #ffeb3b; font-size: 14px; }
         #search-result-box table { width: 100%; border-collapse: collapse; }
-        #search-result-box td {
-            padding: 6px 8px; border-bottom: 1px solid #ddd;
-            font-size: 11px; line-height: 1.3; cursor: pointer;
-        }
+        #search-result-box td { padding: 6px 8px; border-bottom: 1px solid #ddd; font-size: 11px; line-height: 1.3; cursor: pointer; }
         #search-result-box tr:hover { background: #e3f2fd; }
         #search-result-box tr:last-child td { border-bottom: none; }
         .res-workplace { font-weight: bold; color: #003478; font-size: 12px; }
         .res-name { color: #555; }
 
         /* 하단 고정 버튼 바 */
-        #bottom-bar {
-            position: fixed;
-            bottom: 20px;
-            left: 10px;
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            gap: 8px;
-        }
-        #bottom-bar button {
-            flex: 1; 
-            padding: 14px 6px;
-            border-radius: 10px;
-            border: none;
-            font-weight: 800;
-            font-size: 13px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-        }
+        #bottom-bar { position: fixed; bottom: 20px; left: 10px; right: 10px; z-index: 100; display: flex; gap: 8px; }
+        #bottom-bar button { flex: 1; padding: 14px 6px; border-radius: 10px; border: none; font-weight: 800; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 4px; white-space: nowrap; }
         #btn-myloc { background: #2e7d32; color: white; } 
         #btn-admin { background: #003478; color: white; } 
         #btn-report { background: #555555; color: white; } 
 
-        /* 관리자 로그인 후 우측 상단 기능 버튼들 */
-        #admin-panel {
-            position: fixed;
-            top: 70px; 
-            right: 10px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        #admin-panel button {
-            background: white; padding: 8px 12px; border-radius: 6px; border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none;
-        }
-        #btn-sync { color: #2e7d32; }
-        #btn-logout { color: #d32f2f; }
+        /* 관리자 패널 */
+        #admin-panel { position: fixed; top: 70px; right: 10px; z-index: 100; display: flex; flex-direction: column; gap: 8px; }
+        #admin-panel button { background: white; padding: 8px 12px; border-radius: 6px; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); font-weight: bold; font-size: 12px; cursor: pointer; display: none; }
+        #btn-sync { color: #2e7d32; } #btn-logout { color: #d32f2f; }
 
-        /* 모달 및 폼 공통 스타일 */
+        /* 공통 모달 및 폼 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; }
-        .modal-content { 
-            background: white; width: 90%; max-width: 400px; margin: auto; position: relative; 
-            top: 50%; transform: translateY(-50%); padding: 25px; border-radius: 16px; 
-            max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            -webkit-overflow-scrolling: touch;
-        }
+        .modal-content { background: white; width: 90%; max-width: 400px; margin: auto; position: relative; top: 50%; transform: translateY(-50%); padding: 25px; border-radius: 16px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.2); -webkit-overflow-scrolling: touch; }
         .close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 24px; color: #888; }
-        
-        input, select { 
-            width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ddd; 
-            border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; background: #f9f9f9;
-        }
+        input, select { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; background: #f9f9f9; }
         input:focus, select:focus { border-color: #003478; background: white; }
         .submit-btn { background: #003478; color: white; border: none; font-weight: bold; font-size: 16px; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; }
 
@@ -228,17 +67,12 @@
         .info-title { font-size: 20px; font-weight: bold; color: #003478; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         .info-row { margin-bottom: 8px; font-size: 14px; color: #333; }
         .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 15px;}
-        .badge-police { background: #d32f2f; }
-        .badge-public { background: #1976d2; }
-        .badge-cv { background: #0288d1; }
-        .badge-rest { background: #388e3c; }
+        .badge-police { background: #d32f2f; } .badge-public { background: #1976d2; } .badge-cv { background: #0288d1; } .badge-rest { background: #388e3c; }
         .image-carousel { display: flex; overflow-x: auto; gap: 10px; padding: 10px 0; }
         .image-carousel img { height: 160px; border-radius: 8px; flex-shrink: 0; object-fit: cover; cursor: pointer; border: 1px solid #eee; }
 
         /* 검색된 마커 강조 애니메이션 */
-        .highlight-glow {
-            animation: glow-pulse 0.8s infinite alternate !important;
-        }
+        .highlight-glow { animation: glow-pulse 0.8s infinite alternate !important; }
         @keyframes glow-pulse {
             from { box-shadow: 0 0 8px 3px rgba(0, 229, 255, 0.7); transform: scale(1); }
             to { box-shadow: 0 0 20px 8px rgba(0, 229, 255, 1); transform: scale(1.15); }
@@ -251,7 +85,6 @@
 
     <div id="map"></div>
     
-    <!-- 상단 고정 바 -->
     <div id="top-bar">
         <div id="brand-box">
             <img src="SCR-20260823-sdgi.png" alt="제5기동단 로고" onerror="this.style.display='none'">
@@ -266,13 +99,11 @@
         </div>
     </div>
 
-    <!-- 우측 상단 숨김 메뉴 -->
     <div id="admin-panel">
         <button id="btn-sync" onclick="fetchLiveData()">🔄 데이터 실시간 업데이트</button>
         <button id="btn-logout" onclick="logout()">로그아웃</button>
     </div>
 
-    <!-- 좌측 하단 범례 -->
     <div id="legend-box">
         <div class="legend-row">
             <div class="legend-item"><span class="legend-icon-box">🏪</span> 편의점</div>
@@ -287,17 +118,14 @@
         </div>
     </div>
 
-    <!-- 우측 하단 검색 결과 표 -->
     <div id="search-result-box"></div>
 
-    <!-- 하단 고정 버튼 바 -->
     <div id="bottom-bar">
         <button id="btn-myloc" onclick="moveToMyLocation()">📍 내 위치</button>
         <button id="btn-admin" onclick="checkAdminAccess()">➕ 관리자 등록</button>
         <button id="btn-report" onclick="openReportIntro()">💬 제보/문의</button>
     </div>
 
-    <!-- 모달들 -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
@@ -343,8 +171,8 @@
     <div id="imageZoomModal" class="modal" onclick="closeModal('imageZoomModal')"><img id="zoomImage" src=""></div>
 
     <script>
-        // ★ 최신으로 갱신된 웹앱 URL을 입력해주세요 ★
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDTe5IrmjMdD0IoURXiI2wMwsiPJhTlE_ppdUyqnK1kUDKQP8zHY6E2uGdtE3rN9HJXA/exec'; 
+        // ★ 최신으로 발급받으신 Web App URL로 업데이트 됨
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxSCPp8RczYeSIc4cltJLhAAwWG8r3SCrRipt0xQe_GHwWdg3UQ2G8lxIcH-MJRGAfoaw/exec'; 
         
         let map, geocoder;
         let loggedInUser = null;
@@ -546,7 +374,6 @@
             let btn = document.querySelector('#loginModal .submit-btn');
             btn.innerText = "로그인 중...";
             try {
-                // ★ CORS 우회 및 단순 텍스트로 인식하게 하는 옵션 세팅
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -668,39 +495,37 @@
             });
         }
 
-        // 통신 오류 완벽 해결된 submitData 함수 (CORS 우회 헤더 명시)
         async function submitData(type) {
             if(!document.getElementById('f_name').value) return alert("상호명/이름을 입력하세요.");
             document.getElementById('regSubmitBtn').innerText = "전송 중...";
             document.getElementById('regSubmitBtn').disabled = true;
 
-            let pos = registerMarker.getPosition();
-            let payload = {
-                action: type.startsWith('report_') ? 'register_report' : `register_${type}`,
-                userId: loggedInUser,
-                lat: pos.getLat(), lng: pos.getLng(),
-                name: document.getElementById('f_name').value,
-                workplace: document.getElementById('f_workplace').value,
-                address: document.getElementById('f_address').value,
-                hours: document.getElementById('f_hours').value,
-                images: [await compressImage(document.getElementById('f_img1').files[0]), await compressImage(document.getElementById('f_img2').files[0])]
-            };
-
-            if(type.startsWith('report_')) {
-                payload.facilityType = type.split('_')[1];
-                payload.reporter = document.getElementById('f_reporter').value || '익명';
-                if(payload.facilityType === '화장실') { payload.bidet = document.getElementById('f_bidet').value; }
-                else { payload.discount = document.getElementById('f_discount').value; payload.space = document.getElementById('f_space').value; }
-            } else if(type === 'toilet') {
-                Object.assign(payload, { type: document.getElementById('f_type').value, password: document.getElementById('f_password').value, cleanliness: document.getElementById('f_cleanliness').value, bidet: document.getElementById('f_bidet').value, toiletCnt: document.getElementById('f_toiletCnt').value, urinalCnt: document.getElementById('f_urinalCnt').value });
-            } else if(type === 'convenience') {
-                Object.assign(payload, { discount: document.getElementById('f_discount').value, card: document.getElementById('f_card').value, table: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
-            } else if(type === 'restaurant') {
-                Object.assign(payload, { breaktime: document.getElementById('f_breaktime').value, mealType: document.getElementById('f_mealType').value, discount: document.getElementById('f_discount').value, group: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
-            }
-
             try {
-                // ★ CORS 우회 및 단순 텍스트 전송(가장 강력한 보안 무시) 옵션 세팅
+                let pos = registerMarker.getPosition();
+                let payload = {
+                    action: type.startsWith('report_') ? 'register_report' : `register_${type}`,
+                    userId: loggedInUser || '',
+                    lat: pos.getLat(), lng: pos.getLng(),
+                    name: document.getElementById('f_name').value || '',
+                    workplace: document.getElementById('f_workplace').value || '',
+                    address: document.getElementById('f_address').value || '',
+                    hours: document.getElementById('f_hours').value || '',
+                    images: [await compressImage(document.getElementById('f_img1').files[0]), await compressImage(document.getElementById('f_img2').files[0])]
+                };
+
+                if(type.startsWith('report_')) {
+                    payload.facilityType = type.split('_')[1];
+                    payload.reporter = document.getElementById('f_reporter').value || '익명';
+                    if(payload.facilityType === '화장실') { payload.bidet = document.getElementById('f_bidet').value; }
+                    else { payload.discount = document.getElementById('f_discount').value; payload.space = document.getElementById('f_space').value; }
+                } else if(type === 'toilet') {
+                    Object.assign(payload, { type: document.getElementById('f_type').value, password: document.getElementById('f_password').value, cleanliness: document.getElementById('f_cleanliness').value, bidet: document.getElementById('f_bidet').value, toiletCnt: document.getElementById('f_toiletCnt').value, urinalCnt: document.getElementById('f_urinalCnt').value });
+                } else if(type === 'convenience') {
+                    Object.assign(payload, { discount: document.getElementById('f_discount').value, card: document.getElementById('f_card').value, table: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
+                } else if(type === 'restaurant') {
+                    Object.assign(payload, { breaktime: document.getElementById('f_breaktime').value, mealType: document.getElementById('f_mealType').value, discount: document.getElementById('f_discount').value, group: document.getElementById('f_space').value, notes: document.getElementById('f_notes').value });
+                }
+
                 let res = await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -714,11 +539,11 @@
                     closeModal('registerFormModal');
                     fetchLiveData();
                 } else {
-                    alert("오류: " + result.message);
+                    alert("서버 오류: " + result.message);
                 }
             } catch(e) { 
                 console.error("Fetch 통신 실패:", e);
-                alert("통신 실패. 네트워크 상태나 스크립트 주소를 확인해주세요."); 
+                alert("통신 실패. 네트워크 상태나 스크립트 주소를 확인해주세요.\n(만약 계속된다면 구글 Apps Script 권한 허용이 안 된 것입니다.)"); 
             }
             
             document.getElementById('regSubmitBtn').innerText = "완료 및 등록하기";
