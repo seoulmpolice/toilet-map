@@ -273,12 +273,13 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 버그가 완벽하게 수정된 검색 표출 함수
+        // ★ 버그가 안전하게 수정된 검색 기능
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
             if (!allList || allList.length === 0) { alert("데이터 로딩 중입니다. 잠시 후 다시 시도해주세요."); return; }
             
+            // 기존 강조 효과 초기화
             markers.forEach(m => {
                 m.contentDiv.classList.remove('highlight-glow');
                 m.overlay.setZIndex(0);
@@ -292,12 +293,15 @@
                     <span>검색 결과 (${found.length})</span>
                     <span class="result-close" onclick="document.getElementById('search-result-box').style.display='none'">✖</span>
                 </div><table><tbody>`;
+                
                 let bounds = new kakao.maps.LatLngBounds();
+                let validCoordsCount = 0; // 유효한 좌표 개수를 안전하게 계산
                 
                 found.forEach(ft => {
-                    // 유효한 좌표가 있을 때만 bounds에 추가
+                    // 유효한 좌표가 있을 때만 bounds에 추가하여 오류 방지
                     if(ft.lat && ft.lng) {
                         bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                        validCoordsCount++;
                     }
                     let idx = allList.indexOf(ft);
                     
@@ -316,12 +320,17 @@
                 resultBox.innerHTML = tableHtml;
                 resultBox.style.display = 'block';
                 
-                if(found.length === 1 && found[0].lat && found[0].lng) {
-                    map.setCenter(new kakao.maps.LatLng(found[0].lat, found[0].lng));
-                    map.setLevel(3);
-                } else {
-                    // 오류를 발생시키던 bounds.isEmpty()를 삭제하고 안전하게 처리
-                    map.setBounds(bounds);
+                // 검색 결과가 있는 경우에만 지도 이동 수행 (오류 방지 핵심 로직)
+                if(validCoordsCount > 0) {
+                    if(validCoordsCount === 1) {
+                        // 결과가 1개일 때는 해당 좌표로 중심 이동
+                        let singleItem = found.find(item => item.lat && item.lng);
+                        map.setCenter(new kakao.maps.LatLng(singleItem.lat, singleItem.lng));
+                        map.setLevel(3);
+                    } else {
+                        // 결과가 여러 개일 때는 안전하게 bounds 셋팅
+                        map.setBounds(bounds);
+                    }
                 }
 
                 document.getElementById('infoModal').style.display = 'none'; 
