@@ -273,7 +273,7 @@
             allData.restaurants.forEach(r => createMarker(r, '🍽️', '#388e3c', 'restaurant'));
         }
 
-        // ★ 버그가 안전하게 수정된 검색 기능
+        // ★ 에러 처리(숫자형 데이터, 불완전 좌표)가 완벽히 적용된 검색 기능
         function searchFacility() {
             let kw = document.getElementById('searchInput').value.trim();
             if(!kw) return alert("검색어를 입력해주세요.");
@@ -281,11 +281,17 @@
             
             // 기존 강조 효과 초기화
             markers.forEach(m => {
-                m.contentDiv.classList.remove('highlight-glow');
-                m.overlay.setZIndex(0);
+                if(m.contentDiv) m.contentDiv.classList.remove('highlight-glow');
+                if(m.overlay) m.overlay.setZIndex(0);
             });
             
-            let found = allList.filter(item => (item.name && item.name.toLowerCase().includes(kw.toLowerCase())) || (item.workplace && item.workplace.toLowerCase().includes(kw.toLowerCase())));
+            // 데이터베이스 내 장소/이름이 문자가 아닐 수 있으므로 확실히 String 변환 후 필터링
+            let searchKw = kw.toLowerCase();
+            let found = allList.filter(item => {
+                let nameStr = item.name ? String(item.name).toLowerCase() : "";
+                let wpStr = item.workplace ? String(item.workplace).toLowerCase() : "";
+                return nameStr.includes(searchKw) || wpStr.includes(searchKw);
+            });
             
             let resultBox = document.getElementById('search-result-box');
             if(found.length > 0) {
@@ -295,18 +301,22 @@
                 </div><table><tbody>`;
                 
                 let bounds = new kakao.maps.LatLngBounds();
-                let validCoordsCount = 0; // 유효한 좌표 개수를 안전하게 계산
+                let validCoordsCount = 0; 
                 
                 found.forEach(ft => {
-                    // 유효한 좌표가 있을 때만 bounds에 추가하여 오류 방지
-                    if(ft.lat && ft.lng) {
-                        bounds.extend(new kakao.maps.LatLng(ft.lat, ft.lng));
+                    // 유효한 좌표를 가진 데이터만 안전하게 지도 바운드 및 카운트
+                    let lat = parseFloat(ft.lat);
+                    let lng = parseFloat(ft.lng);
+                    
+                    if(!isNaN(lat) && !isNaN(lng)) {
+                        bounds.extend(new kakao.maps.LatLng(lat, lng));
                         validCoordsCount++;
                     }
+                    
                     let idx = allList.indexOf(ft);
                     
                     let matchedMarker = markers.find(m => m.data === ft);
-                    if(matchedMarker) {
+                    if(matchedMarker && matchedMarker.contentDiv) {
                         matchedMarker.contentDiv.classList.add('highlight-glow');
                         matchedMarker.overlay.setZIndex(10);
                     }
@@ -320,15 +330,15 @@
                 resultBox.innerHTML = tableHtml;
                 resultBox.style.display = 'block';
                 
-                // 검색 결과가 있는 경우에만 지도 이동 수행 (오류 방지 핵심 로직)
+                // 유효한 좌표가 존재하는 경우에만 지도의 중심 이동
                 if(validCoordsCount > 0) {
                     if(validCoordsCount === 1) {
-                        // 결과가 1개일 때는 해당 좌표로 중심 이동
-                        let singleItem = found.find(item => item.lat && item.lng);
-                        map.setCenter(new kakao.maps.LatLng(singleItem.lat, singleItem.lng));
-                        map.setLevel(3);
+                        let singleItem = found.find(item => !isNaN(parseFloat(item.lat)) && !isNaN(parseFloat(item.lng)));
+                        if(singleItem) {
+                            map.setCenter(new kakao.maps.LatLng(parseFloat(singleItem.lat), parseFloat(singleItem.lng)));
+                            map.setLevel(3);
+                        }
                     } else {
-                        // 결과가 여러 개일 때는 안전하게 bounds 셋팅
                         map.setBounds(bounds);
                     }
                 }
@@ -340,10 +350,14 @@
             }
         }
 
+        // 특정 마커 포커스 기능 역시 오류가 없도록 안전 처리
         function focusOnItem(index) {
             let data = allList[index];
-            if(data.lat && data.lng) {
-                map.setCenter(new kakao.maps.LatLng(data.lat, data.lng));
+            let lat = parseFloat(data.lat);
+            let lng = parseFloat(data.lng);
+            
+            if(!isNaN(lat) && !isNaN(lng)) {
+                map.setCenter(new kakao.maps.LatLng(lat, lng));
                 map.setLevel(3);
             }
             showInfo(data, data.category);
